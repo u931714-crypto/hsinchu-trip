@@ -23,6 +23,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Validate inline JavaScript and required app structure
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("index.html").read_text(encoding="utf-8")
+          assert '<html lang="zh-Hant">' in html, "Traditional Chinese document language missing"
+          for required in ['id="map"', 'id="list"', 'id="next"', 'id="undoBar"', 'id="pool"']:
+              assert required in html, f"Required UI element missing: {required}"
+          scripts = re.findall(r'<script(?![^>]*\\bsrc=)[^>]*>(.*?)</script>', html, re.S | re.I)
+          assert scripts, "No inline application script found"
+          for i, script in enumerate(scripts):
+              Path(f"/tmp/inline-{i}.js").write_text(script, encoding="utf-8")
+          print(f"HTML structure OK; extracted {len(scripts)} inline script(s)")
+          PY
+          for file in /tmp/inline-*.js; do node --check "$file"; done
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site
