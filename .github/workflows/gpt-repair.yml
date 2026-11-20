@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Verify API key and model access
         env:
-          OPENAI_API_KEY: ${{ { secrets.OPENAI_API_KEY }}}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           if [ -z "$OPENAI_API_KEY" ]; then
             echo "::error::OPENAI_API_KEY is missing or unavailable."
@@ -58,7 +58,7 @@ jobs:
       - name: Download the failed run's QA artifact
         uses: actions/download-artifact@v4
         with:
-          github-token: ${{ secrets.GH_REPAIR_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
           name: qa-report-10-runs
           path: qa-input
@@ -152,7 +152,7 @@ jobs:
       - name: Create repair branch and pull request
         if: steps.patch.outputs.created == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_REPAIR_TOKEN }}
           RUN_ID: ${{ github.event.workflow_run.id }}
           FAILED_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
