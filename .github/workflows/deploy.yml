@@ -66,7 +66,7 @@ jobs:
           passed_checks=sum(r.get("passed",0) for r in reports)
           failed_checks=sum(r.get("failed",0) for r in reports)
           skipped_checks=sum(r.get("skipped",0) for r in reports)
-          ok=len(reports)==10 and len(failed_runs)==0
+          ok=len(reports)==10 and len(failed_runs)==0 and skipped_checks==0
           run_url=f"{os.environ.get('GITHUB_SERVER_URL','https://github.com')}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
           lines=[
             "# Hsinchu Trip - QA report","",
