@@ -184,7 +184,7 @@ const I={
  car:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M3 16h18M7 19v-3M17 19v-3"/><circle cx="8" cy="13" r=".8"/><circle cx="16" cy="13" r=".8"/></svg>',
  walk:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2-6 3 3v3M12 15l-1-5 3-2 2 4 3 1M11 10l-3 2v3"/></svg>',
  map:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'};
-const TRIP='2026-11-21',TRIP_DOW=6,VER=9,KEY='hc_trip_v8';
+const TRIP='2026-11-21',TRIP_DOW=6,VER=10,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
 const HOME={name:'新竹縣政府',q:'新竹縣政府 竹北市光明六路10號',lat:24.8269,lng:121.0129,addr:'竹北市光明六路10號'};
 const P={
  apang:{name:'阿胖豆漿',q:'阿胖豆漿 新竹縣竹東鎮東寧路三段56號',lat:24.7375,lng:121.0905,c:'Z',dur:50,type:'must',open:'05:30',close:'11:00',closed:[1],addr:'竹東鎮東寧路三段56號',note:'粄條韭菜蛋餅；吃輕再上山'},
@@ -219,7 +219,9 @@ function sanitize(s){
  if(!s.go||typeof s.go!=='object'||!Number.isFinite(s.go.at))s.go=null;
  if(!s.cname||typeof s.cname!=='object')s.cname={};for(const id in s.cname){if(!(id in P)||typeof s.cname[id]!=='string')delete s.cname[id];else{s.cname[id]=s.cname[id].replace(/[<>&"'`]/g,'').trim().slice(0,40);if(!s.cname[id])delete s.cname[id]}}
  for(const k of ['on','dur','fix','act','auto'])if(!s[k]||typeof s[k]!=='object'||Array.isArray(s[k]))s[k]=k==='on'?clone(DEF.on):{};
- for(const id of ['sanmao','jiangjun'])if(s.on[id]==null)s.on[id]=1;
+ // Preserve existing choices, but fill newly introduced default-on stops during upgrades.
+ for(const id in DEF.on)if(s.on[id]==null)s.on[id]=DEF.on[id];
+ for(const id in s.on)if(!(id in P))delete s.on[id];
  for(const id in s.dur)if(!(id in P)||!Number.isFinite(s.dur[id])||s.dur[id]<5)delete s.dur[id];
  for(const id in s.act)if(!(id in P)||!Number.isFinite(s.act[id]))delete s.act[id];
  for(const id in s.fix)if(!(id in P)||!okHM(s.fix[id]))delete s.fix[id];
@@ -256,7 +258,7 @@ function compute(st,useAct=true,floor=null){
   if(!actual&&li<0&&st.anchor&&st.anchor.after===prev&&nowInfo().on)t=Math.max(t,st.anchor.at);
   if(!actual&&floor!=null&&idx===li+1){const gone=st.go&&st.go.from===(li>=0?en[li]:'home');t=gone?Math.max(t,st.go.at+L.m,floor):Math.max(t,floor)}
   let arr=actual?st.act[id]:t,wait=0;
-  if(st.fix[id]){let f=toM(st.fix[id]);while(f<arr-720)f+=1440;if(f>arr){wait=f-arr;arr=f}}
+  if(!actual&&st.fix[id]){let f=toM(st.fix[id]);while(f<arr-720)f+=1440;if(f>arr){wait=f-arr;arr=f}}
   const dep=arr+durOf(st,id),p=P[id],w=[];
   const day=Math.floor(arr/1440),a=arr-day*1440,d=dep-day*1440,mw=p.type==='must'?3:1;
   if(!actual){
