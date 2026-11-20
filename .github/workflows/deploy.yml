@@ -112,7 +112,7 @@ jobs:
             "- run-1.json ... run-10.json: individual test details",
             "- run-1.log ... run-10.log: complete console logs",
             "- screenshots/: failure screenshots, when generated",
-            "","Artifacts: qa-report-10-runs (repository collaborator access; retained 30 days)."]
+            "","Artifacts: qa-report-10-runs (access follows repository permissions; retained 30 days)."]
           os.makedirs("qa-reports",exist_ok=True)
           manifest={
             "schema_version":1,
