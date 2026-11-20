@@ -50,8 +50,8 @@ jobs:
             sleep 1
           done
           for run in $(seq 1 10); do
-            echo "===== Mobile regression run \${run}/10 ====="
-            if QA_RUN="$run" node tests/smoke.cjs 2>&1 | tee "qa-reports/run-\${run}.log"; then
+            echo "===== Mobile regression run ${run}/10 ====="
+            if QA_RUN="$run" node tests/smoke.cjs 2>&1 | tee "qa-reports/run-${run}.log"; then
               echo "RUN $run: PASS"
             else
               echo "RUN $run: FAIL"
@@ -123,7 +123,7 @@ jobs:
       - name: Enforce 10/10 passing gate
         if: always()
         run: |
-          if [ "\${{ steps.regression.outputs.passed }}" != "true" ]; then
+          if [ "${{ steps.regression.outputs.passed }}" != "true" ]; then
             echo "::error::Deployment blocked: all 10 independent regression runs must pass."
             exit 1
           fi
@@ -133,7 +133,7 @@ jobs:
     if: needs.test.result == 'success'
     environment:
       name: github-pages
-      url: \${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
