@@ -132,10 +132,10 @@ jobs:
             "artifact_inventory":["latest.md","manifest.json"]+[f"run-{i}.json" for i in range(1,11)]+[f"run-{i}.log" for i in range(1,11)]
           }
           with open("qa-reports/manifest.json","w",encoding="utf-8") as f: json.dump(manifest,f,ensure_ascii=False,indent=2)
-          with open("qa-reports/latest.md","w") as f: f.write("\\n".join(lines)+"\\n")
+          with open("qa-reports/latest.md","w") as f: f.write("\n".join(lines)+"\n")
           with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:
-              f.write("\\n".join(lines)+"\\n")
-              f.write("\\nMachine-readable report: `qa-report-10-runs/manifest.json`\\n")
+              f.write("\n".join(lines)+"\n")
+              f.write("\nMachine-readable report: `qa-report-10-runs/manifest.json`\n")
           with open(os.environ["GITHUB_OUTPUT"],"a") as f: f.write(f"passed={'true' if ok else 'false'}\n")
           if not ok:
               print("Regression gate failed. See Failure details and qa-reports artifact.")
