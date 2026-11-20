@@ -39,6 +39,14 @@ jobs:
           print(f"HTML structure OK; extracted {len(scripts)} inline script(s)")
           PY
           for file in /tmp/inline-*.js; do node --check "$file"; done
+      - name: Install browser test runtime
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Run mobile browser smoke tests
+        run: |
+          python3 -m http.server 4173 >/tmp/hsinchu-http.log 2>&1 &
+          node tests/smoke.cjs
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site
