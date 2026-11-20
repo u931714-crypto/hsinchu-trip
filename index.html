@@ -210,21 +210,21 @@ const HM=/^\d\d:\d\d$/;
 const okHM=s=>typeof s==='string'&&HM.test(s)&&+s.slice(0,2)<24&&+s.slice(3)<60;
 function sanitize(s){
  if(!s||typeof s!=='object'||Array.isArray(s)||!Array.isArray(s.order))return clone(DEF);
- s.order=s.order.filter((id,i,a)=>typeof id==='string'&&id in P&&a.indexOf(id)===i);
+ s.order=s.order.filter((id,i,a)=>typeof id==='string'&&Object.prototype.hasOwnProperty.call(P,id)&&a.indexOf(id)===i);
  // v9 migration: insert restored V6 Qingquan stops after the bridge before appending other missing defaults.
  for(const id of ['sanmao','jiangjun'])if(!s.order.includes(id)){const anchor=s.order.indexOf(id==='sanmao'?'bridge':'sanmao');s.order.splice(anchor>=0?anchor+1:s.order.length,0,id)}
  for(const id of DEF.order)if(!s.order.includes(id))s.order.push(id);
  if(!s.baseArr||typeof s.baseArr!=='object'||s.base==null)s.baseArr=null;
- if(!s.anchor||!Number.isFinite(s.anchor.at)||!(s.anchor.after==='home'||s.anchor.after in P))s.anchor=null;
+ if(!s.anchor||!Number.isFinite(s.anchor.at)||!(s.anchor.after==='home'||Object.prototype.hasOwnProperty.call(P,s.anchor.after)))s.anchor=null;
  if(!s.go||typeof s.go!=='object'||!Number.isFinite(s.go.at))s.go=null;
- if(!s.cname||typeof s.cname!=='object')s.cname={};for(const id in s.cname){if(!(id in P)||typeof s.cname[id]!=='string')delete s.cname[id];else{s.cname[id]=s.cname[id].replace(/[<>&"'`]/g,'').trim().slice(0,40);if(!s.cname[id])delete s.cname[id]}}
+ if(!s.cname||typeof s.cname!=='object')s.cname={};for(const id in s.cname){if(!(Object.prototype.hasOwnProperty.call(P,id))||typeof s.cname[id]!=='string')delete s.cname[id];else{s.cname[id]=s.cname[id].replace(/[<>&"'`]/g,'').trim().slice(0,40);if(!s.cname[id])delete s.cname[id]}}
  for(const k of ['on','dur','fix','act','auto'])if(!s[k]||typeof s[k]!=='object'||Array.isArray(s[k]))s[k]=k==='on'?clone(DEF.on):{};
  // Preserve existing choices, but fill newly introduced default-on stops during upgrades.
  for(const id in DEF.on)if(s.on[id]==null)s.on[id]=DEF.on[id];
- for(const id in s.on)if(!(id in P))delete s.on[id];
- for(const id in s.dur)if(!(id in P)||!Number.isFinite(s.dur[id])||s.dur[id]<5)delete s.dur[id];
- for(const id in s.act)if(!(id in P)||!Number.isFinite(s.act[id]))delete s.act[id];
- for(const id in s.fix)if(!(id in P)||!okHM(s.fix[id]))delete s.fix[id];
+ for(const id in s.on)if(!(Object.prototype.hasOwnProperty.call(P,id)))delete s.on[id];
+ for(const id in s.dur)if(!(Object.prototype.hasOwnProperty.call(P,id))||!Number.isFinite(s.dur[id])||s.dur[id]<5)delete s.dur[id];
+ for(const id in s.act)if(!(Object.prototype.hasOwnProperty.call(P,id))||!Number.isFinite(s.act[id]))delete s.act[id];
+ for(const id in s.fix)if(!(Object.prototype.hasOwnProperty.call(P,id))||!okHM(s.fix[id]))delete s.fix[id];
  for(const id in s.auto)if(s.act[id]==null)delete s.auto[id];
  if(!Number.isFinite(s.base)||!Object.keys(s.act).length)s.base=null;
  if(!okHM(s.start))s.start=DEF.start;
@@ -235,7 +235,8 @@ function toS(m){const d=Math.floor(m/1440),r=((m%1440)+1440)%1440;return String(
 const Q=new URLSearchParams(location.search);
 let S;try{S=sanitize(JSON.parse(localStorage.getItem(KEY)))}catch(e){S=clone(DEF)}
 let MODE=Q.get('edit')?'edit':'view';
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+let storageWarned=false;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){if(!storageWarned){storageWarned=true;setTimeout(()=>toast('瀏覽器無法保存行程變更；請確認儲存空間或隱私設定。',null),0)}}}
 const cl=id=>id==='home'?'home':P[id].c;
 const short=id=>nm(id).replace(/（.*）/,'');
 function leg(a,b){
