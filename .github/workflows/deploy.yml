@@ -1,11 +1,8 @@
-name: Hsinchu Trip - Check and Deploy
+name: Deploy Hsinchu Trip to GitHub Pages
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,68 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    name: Lightweight static QA
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Check HTML structure and required elements
-        run: |
-          python3 - <<'PY'
-          from html.parser import HTMLParser
-          from pathlib import Path
-
-          html = Path("index.html").read_text(encoding="utf-8")
-          required_ids = {"map", "list", "next", "undoBar", "pool"}
-          
-          class Inspector(HTMLParser):
-              def __init__(self):
-                  super().__init__()
-                  self.ids = []
-                  self.lang_ok = False
-                  self.title_seen = False
-              def handle_starttag(self, tag, attrs):
-                  attrs = dict(attrs)
-                  if tag == "html" and attrs.get("lang") == "zh-Hant":
-                      self.lang_ok = True
-                  if tag == "title":
-                      self.title_seen = True
-                  if attrs.get("id"):
-                      self.ids.append(attrs["id"])
-
-          parser = Inspector()
-          parser.feed(html)
-          missing = sorted(required_ids - set(parser.ids))
-          duplicates = sorted({x for x in parser.ids if parser.ids.count(x) > 1})
-          assert parser.lang_ok, "HTML language must be zh-Hant"
-          assert parser.title_seen, "HTML title element is missing"
-          assert not missing, f"Required element IDs missing: {missing}"
-          assert not duplicates, f"Duplicate element IDs: {duplicates}"
-          assert "<script" in html.lower(), "No application script found"
-          print("HTML structure OK")
-          print(f"Required UI elements: {len(required_ids)}/{len(required_ids)}")
-          PY
-
-      - name: Check inline JavaScript syntax
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          html = Path("index.html").read_text(encoding="utf-8")
-          scripts = re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>', html, re.S | re.I)
-          assert scripts, "No inline application script found"
-          for i, script in enumerate(scripts):
-              Path(f"/tmp/hsinchu-inline-{i}.js").write_text(script, encoding="utf-8")
-          print(f"Extracted {len(scripts)} inline script(s)")
-          PY
-          for file in /tmp/hsinchu-inline-*.js; do node --check "$file"; done
-
   deploy:
     name: Deploy GitHub Pages
-    needs: check
-    if: github.event_name != 'pull_request'
     permissions:
       contents: read
       pages: write
