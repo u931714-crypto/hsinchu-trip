@@ -1,23 +1,12 @@
-# Hsinchu Trip — Lightweight QA
+# Hsinchu Trip — Optional QA Guide
 
-## 目的
+## 部署原則
 
-用最小成本確認網站修改沒有明顯破壞既有功能。不使用 OpenAI API、不自動改寫程式，也不要求每次提交都跑多輪瀏覽器測試。
+推送至 `main` 後，GitHub Actions 直接部署 GitHub Pages。部署不依賴 CI／QA 檢查，也不需要人工核准或手動啟動測試。
 
-## 每次 GitHub Actions 自動檢查
+## 可選的 ChatGPT 輔助檢查
 
-推送到 `main` 或建立對 `main` 的 Pull Request 時，會執行：
-
-1. HTML 基本結構、文件語言與必要 UI 元素檢查。
-2. 必要元素 ID 是否缺漏或重複。
-3. Inline JavaScript 語法檢查（Node.js `--check`）。
-4. 檢查成功後，推送至 `main` 才會部署 GitHub Pages。
-
-這些是靜態檢查，不代表瀏覽器互動已經實測。
-
-## ChatGPT 協助 QA（需要時才執行）
-
-使用者要求檢查時，ChatGPT 讀取 GitHub 最新版本與本次變更，按下列範圍檢查，並提供 QA 結果。沒有實際操作瀏覽器的項目必須標記為 `NOT VERIFIED`，不得假稱通過。
+只有在使用者主動要求檢查時，ChatGPT 才讀取 GitHub 最新版本與本次變更，協助檢視：
 
 | 項目 | 檢查內容 |
 |---|---|
@@ -34,22 +23,13 @@
 
 - **PASS**：有明確證據支持該項檢查通過。
 - **FAIL**：發現可重現的錯誤或程式缺陷。
-- **NOT VERIFIED**：目前只有程式碼分析，或缺少實際瀏覽器驗證。
+- **NOT VERIFIED**：只有程式碼分析，或缺少實際瀏覽器驗證。
 
-## QA 報告格式
+這份指引是可選的工作方式，不是部署條件。ChatGPT 不會將程式碼推論假稱為瀏覽器實測，也不會在未經要求時自動修改程式。
 
-每次檢查以簡短 Markdown 回報：
+## 限制
 
-- Repository / branch / commit
-- 本次變更摘要
-- 每項檢查的 PASS、FAIL 或 NOT VERIFIED
-- 發現的問題、影響範圍與建議
-- 是否建議部署
-
-## 不在本流程範圍內
-
-- 不跑固定 10 輪或 80 個測試。
-- 不安裝 Playwright 作為每次部署的必要條件。
-- 不呼叫 OpenAI API。
-- 不自動修改正式程式碼或建立修復 PR。
-- 不把靜態檢查結果包裝成完整瀏覽器測試。
+- 不使用 OpenAI API。
+- 不要求固定輪數的測試。
+- 不設置 CI／QA 部署閘門。
+- 不自動修改正式程式碼。
