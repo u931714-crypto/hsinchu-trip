@@ -1,0 +1,42 @@
+---
+name: checkMaps
+description: Run the ChatGPT-side quality gate for the Hsinchu Trip website before committing changes to GitHub. Invoke when the user says "checkMaps", "執行 checkMaps", or asks to modify/check this project.
+---
+
+# checkMaps — Hsinchu Trip quality gate
+
+## Purpose
+ChatGPT owns the development quality checks. GitHub Actions is deployment-only. Never restore a GitHub CI/QA gate or ask the user to run tests manually.
+
+## Invocation
+When the user says `checkMaps`, `執行 checkMaps`, or asks for a change to the Hsinchu Trip project, execute this workflow. Do not merely explain the workflow.
+
+## Workflow
+1. Read the current repository state and relevant files from `u931714-crypto/hsinchu-trip` before editing.
+2. Understand the requested change and inspect related HTML, CSS, JavaScript, assets, and documentation.
+3. Make the requested change directly in the repository.
+4. Perform proportionate quality checks before committing:
+   - Check changed HTML for structural issues and broken references.
+   - Check changed JavaScript for syntax errors and obvious runtime hazards.
+   - Check CSS for malformed rules and unintended layout regressions.
+   - Review links, map data, Leaflet/OpenStreetMap integration, and user-facing behavior affected by the change.
+   - Run available focused automated or browser checks when an execution environment is available. Do not claim tests were run if they were not.
+   - Review the diff for accidental changes, secrets, debug output, and unrelated modifications.
+5. If a check finds a defect, fix it and repeat the relevant checks.
+6. Commit the verified changes directly to the `main` branch.
+7. Confirm the GitHub Pages deployment workflow was triggered. Verify its result when possible; do not claim deployment succeeded until it is confirmed.
+8. Report only the concise final result: what changed, commit, checks actually performed, and deployment status.
+
+## GitHub responsibilities
+- GitHub Actions only deploys GitHub Pages on pushes to `main`.
+- Do not add CI, QA, test, lint, build, approval, or manual-dispatch gates to the deployment workflow.
+- Do not make deployment depend on a ChatGPT-generated status check.
+- Do not ask the user to manually run tests, approve a deployment, or trigger Actions.
+
+## Working rules
+- Preserve existing project behavior and style unless the request requires a change.
+- Keep checks lightweight and relevant; do not run arbitrary repeated test rounds.
+- Prefer focused tests over large generic test suites.
+- Never fabricate test results or deployment status.
+- If the available tools cannot execute a test, perform a source review and clearly state that execution was unavailable.
+- Do not stop to ask the user to perform routine engineering steps. Ask only when a genuine product decision or missing requirement blocks safe implementation.
