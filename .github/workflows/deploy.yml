@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  pull_request:
+    branches: [main]
 permissions:
   contents: write
   pages: write
@@ -130,7 +132,7 @@ jobs:
   deploy:
     name: Deploy GitHub Pages
     needs: test
-    if: needs.test.result == 'success'
+    if: needs.test.result == 'success' && github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
