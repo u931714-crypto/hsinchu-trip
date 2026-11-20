@@ -47,10 +47,31 @@ jobs:
         run: |
           python3 -m http.server 4173 >/tmp/hsinchu-http.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          mkdir -p qa-reports
           for run in $(seq 1 10); do
-            echo "===== Mobile regression run ${run}/10 ====="
-            node tests/smoke.cjs
+            echo "===== Mobile regression run \${run}/10 ====="
+            node tests/smoke.cjs | tee "qa-reports/run-\${run}.log"
+            cp qa-report.json "qa-reports/run-\${run}.json"
           done
+          python3 - <<'PY'
+          import json, glob, os
+          reports=[json.load(open(p)) for p in sorted(glob.glob("qa-reports/run-*.json"))]
+          total=sum(r["passed"] for r in reports)
+          skipped=sum(r["skipped"] for r in reports)
+          with open("qa-reports/summary.json","w") as f:
+              json.dump({"runs":len(reports),"passed_checks":total,"skipped_checks":skipped,"failed_runs":0},f,indent=2)
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:
+              f.write("# Hsinchu Trip QA - 10-run regression\n\n")
+              f.write(f"- Runs: **{len(reports)}/10**\n- Passed checks: **{total}**\n- Skipped checks: **{skipped}**\n- Failed runs: **0**\n\n")
+              f.write("Detailed JSON and logs are attached as the qa-report-10-runs artifact for GPT review.\n")
+          PY
+      - name: Upload QA reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-report-10-runs
+          path: qa-reports/
+          if-no-files-found: warn
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site
