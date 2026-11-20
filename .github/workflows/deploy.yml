@@ -65,11 +65,18 @@ jobs:
           reports=[]
           for p in sorted(glob.glob("qa-reports/run-*.json")):
               with open(p) as f: reports.append(json.load(f))
-          failed_runs=[r for r in reports if r.get("failed",0)>0 or r.get("errors")]
+          expected_runs=[str(i) for i in range(1,11)]
+          actual_runs=[str(r.get("run","")) for r in reports]
+          missing_runs=sorted(set(expected_runs)-set(actual_runs))
+          duplicate_runs=sorted({x for x in actual_runs if actual_runs.count(x)>1})
+          incomplete_runs=[r for r in reports if len(r.get("tests",[]))!=8]
+          failed_runs=[r for r in reports if r.get("failed",0)>0 or r.get("errors") or r.get("fatal")]
           passed_checks=sum(r.get("passed",0) for r in reports)
           failed_checks=sum(r.get("failed",0) for r in reports)
           skipped_checks=sum(r.get("skipped",0) for r in reports)
-          ok=len(reports)==10 and len(failed_runs)==0 and skipped_checks==0
+          ok=(len(reports)==10 and not missing_runs and not duplicate_runs and
+              not incomplete_runs and len(failed_runs)==0 and skipped_checks==0 and
+              all(r.get("passed",0)==8 for r in reports))
           run_url=f"{os.environ.get('GITHUB_SERVER_URL','https://github.com')}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
           lines=[
             "# Hsinchu Trip - QA report","",
@@ -96,10 +103,39 @@ jobs:
               if r.get("fatal"):
                   details.append(f"- Run {r.get('run')} fatal: {r['fatal']}")
           lines += details or ["No failures recorded."]
-          lines += ["","Artifacts: qa-report-10-runs contains JSON, full logs, and failure screenshots."]
+          lines += ["","## Integrity checks","",
+            f"- Missing run numbers: {', '.join(missing_runs) if missing_runs else 'none'}",
+            f"- Duplicate run numbers: {', '.join(duplicate_runs) if duplicate_runs else 'none'}",
+            f"- Incomplete runs (expected 8 checks): {len(incomplete_runs)}",
+            "","## Machine-readable entry point","",
+            "- manifest.json: run metadata, 10-run integrity, per-run results and artifact inventory",
+            "- run-1.json ... run-10.json: individual test details",
+            "- run-1.log ... run-10.log: complete console logs",
+            "- screenshots/: failure screenshots, when generated",
+            "","Artifacts: qa-report-10-runs (repository collaborator access; retained 30 days)."]
           os.makedirs("qa-reports",exist_ok=True)
-          with open("qa-reports/latest.md","w") as f: f.write("\n".join(lines)+"\n")
-          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f: f.write("\n".join(lines)+"\n")
+          manifest={
+            "schema_version":1,
+            "project":"Hsinchu Trip",
+            "run_id":os.environ["GITHUB_RUN_ID"],
+            "run_attempt":os.environ.get("GITHUB_RUN_ATTEMPT","1"),
+            "commit":os.environ.get("GITHUB_SHA",""),
+            "workflow_url":run_url,
+            "result":"PASS" if ok else "FAIL",
+            "expected_runs":10,
+            "actual_runs":len(reports),
+            "missing_runs":missing_runs,
+            "duplicate_runs":duplicate_runs,
+            "incomplete_runs":[r.get("run") for r in incomplete_runs],
+            "totals":{"passed":passed_checks,"failed":failed_checks,"skipped":skipped_checks},
+            "runs":[{"run":r.get("run"),"result":"FAIL" if r.get("failed",0) or r.get("errors") or r.get("fatal") or len(r.get("tests",[]))!=8 else "PASS","passed":r.get("passed",0),"failed":r.get("failed",0),"skipped":r.get("skipped",0),"tests":r.get("tests",[]),"errors":r.get("errors",[]),"fatal":r.get("fatal")} for r in reports],
+            "artifact_inventory":["latest.md","manifest.json"]+[f"run-{i}.json" for i in range(1,11)]+[f"run-{i}.log" for i in range(1,11)]
+          }
+          with open("qa-reports/manifest.json","w",encoding="utf-8") as f: json.dump(manifest,f,ensure_ascii=False,indent=2)
+          with open("qa-reports/latest.md","w") as f: f.write("\\n".join(lines)+"\\n")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:
+              f.write("\\n".join(lines)+"\\n")
+              f.write("\\nMachine-readable report: `qa-report-10-runs/manifest.json`\\n")
           with open(os.environ["GITHUB_OUTPUT"],"a") as f: f.write(f"passed={'true' if ok else 'false'}\n")
           if not ok:
               print("Regression gate failed. See Failure details and qa-reports artifact.")
