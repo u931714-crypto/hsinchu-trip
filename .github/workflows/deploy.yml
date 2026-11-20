@@ -6,15 +6,16 @@ on:
   pull_request:
     branches: [main]
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read
 concurrency:
   group: hsinchu-trip-pages
   cancel-in-progress: false
 jobs:
   test:
     name: 10-run mobile regression gate
+    permissions:
+      contents: read
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -114,14 +115,6 @@ jobs:
             /tmp/hsinchu-http.log
           if-no-files-found: warn
           retention-days: 30
-      - name: Publish latest report for GPT review
-        if: always() && hashFiles('qa-reports/latest.md') != ''
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore(qa): publish latest automated test report"
-          branch: qa-reports
-          create_branch: true
-          file_pattern: qa-reports/latest.md
       - name: Enforce 10/10 passing gate
         if: always()
         run: |
@@ -131,6 +124,11 @@ jobs:
           fi
   deploy:
     name: Deploy GitHub Pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    timeout-minutes: 10
     needs: test
     if: needs.test.result == 'success' && github.event_name != 'pull_request'
     environment:
