@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>11/21（六）新竹一日遊 v12</title>
+<title>11/21（六）新竹一日遊 v13</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" media="print" onload="this.media='all'">
 <style>
 :root{--bg:#f3eee4;--card:#fffdf8;--ink:#22201b;--sub:#5f5c54;--line:#e0d9c9;--must:#b8532e;--mustTxt:#a8462a;--mustbg:#f6e3d9;--opt:#4a6b55;--optTxt:#3f6049;--optbg:#e2ebe3;--acc:#2e4a6b;--warn:#a32d2d;--warnbg:#fbe9e9;--onc:#fff;--wait:#8a5a0b;--waitbg:#faeeda}
@@ -149,7 +149,7 @@ html{scroll-padding-bottom:76px;scroll-padding-top:60px}
 <div class="sum" id="sum" role="region" aria-label="行程摘要"></div><div class="sr" id="srlive" role="status" aria-live="polite"></div>
 <main>
 <div class="hdr">
-<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v12｜清泉老王客棧午餐・返家休息後抱石</div></div>
+<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v13｜08:30 出發・阿胖外帶・清泉後直接抱石</div></div>
 <button id="mode" aria-pressed="false">✏️ 編輯</button>
 </div>
 
@@ -172,7 +172,7 @@ html{scroll-padding-bottom:76px;scroll-padding-top:60px}
 
 <div class="foot">
 車程為估算（含停車約 10 分）；藍線為道路行車路線（需網路）；若路線服務暫時無法連線，會以虛線顯示站點連線示意。導航請按「導航」。清泉吊橋、三毛夢屋、將軍湯拆成獨立步行點，地圖位置以清泉吊橋附近示意；營業及開放狀態請以現場公告為準。阿胖、故居週一休；蕭如松週二休；三毛夢屋週三休；老王客棧週六日 10:00–15:00（請先確認）。<br>
-v12｜清泉午餐改為老王客棧；清泉後回縣政府自由休息，再於 16:00 前往 BABO 抱石。<br>編輯模式：拖曳 ≡ 或 ↑↓ 排序、±分鐘調停留、設「最早開始」會自動插入等待。改錯可按「↶ 復原」。<span class="edit-only"> <button class="resetlink" id="reset">重置成預設行程</button></span>
+v13｜08:30 出發；阿胖豆漿外帶（車上吃）；午餐老王客棧；清泉後不回家，直接開往 BABO，16:00 抱石。<br>編輯模式：拖曳 ≡ 或 ↑↓ 排序、±分鐘調停留、設「最早開始」會自動插入等待。改錯可按「↶ 復原」。<span class="edit-only"> <button class="resetlink" id="reset">重置成預設行程</button></span>
 </div>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="undoBtn">復原</button></div>
@@ -184,10 +184,10 @@ const I={
  car:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M3 16h18M7 19v-3M17 19v-3"/><circle cx="8" cy="13" r=".8"/><circle cx="16" cy="13" r=".8"/></svg>',
  walk:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2-6 3 3v3M12 15l-1-5 3-2 2 4 3 1M11 10l-3 2v3"/></svg>',
  map:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'};
-const TRIP='2026-11-21',TRIP_DOW=6,VER=12,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
+const TRIP='2026-11-21',TRIP_DOW=6,VER=13,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
 const HOME={name:'新竹縣政府',q:'新竹縣政府 竹北市光明六路10號',lat:24.8269,lng:121.0129,addr:'竹北市光明六路10號'};
 const P={
- apang:{name:'阿胖豆漿',q:'阿胖豆漿 新竹縣竹東鎮東寧路三段56號',lat:24.7375,lng:121.0905,c:'Z',dur:50,type:'must',open:'05:30',close:'11:00',closed:[1],addr:'竹東鎮東寧路三段56號',note:'粄條韭菜蛋餅；吃輕再上山'},
+ apang:{name:'阿胖豆漿',q:'阿胖豆漿 新竹縣竹東鎮東寧路三段56號',lat:24.7375,lng:121.0905,c:'Z',dur:10,type:'must',open:'05:30',close:'11:00',closed:[1],addr:'竹東鎮東寧路三段56號',note:'外帶：粄條韭菜蛋餅，車上吃；吃輕再上山'},
  zhang:{name:'張學良故居',q:'張學良故居 新竹縣五峰鄉',lat:24.5783,lng:121.1072,c:'Q',dur:75,type:'must',open:'09:00',close:'17:00',closed:[1],addr:'五峰鄉桃山村清泉256-6號',note:'導覽現場問：服務台→原住民族館→跟團聽'},
  bridge:{name:'清泉吊橋',q:'清泉吊橋 新竹縣五峰鄉',lat:24.5797,lng:121.1056,c:'Q',dur:20,type:'opt',open:'09:00',close:'17:00',closed:[3],addr:'五峰鄉清泉部落（清泉吊橋）',note:'沿溪散步、欣賞吊橋；雨天或路面濕滑就略過'},
  sanmao:{name:'三毛夢屋',q:'三毛夢屋 新竹縣五峰鄉清泉',lat:24.5797,lng:121.1056,c:'Q',dur:20,type:'opt',closed:[3],addr:'五峰鄉清泉部落（清泉吊橋步行區）',note:'有營業再入內參觀；週三休，其他日期仍以現場公告為準'},
@@ -205,7 +205,7 @@ const P={
 };
 const CL={home:{Z:30,Q:90,H:25,B:45,N:60},Z:{Q:70,H:45,B:25,N:45},Q:{H:105,B:80,N:95},H:{B:55,N:65},B:{N:50}};
 const REVIEWED=new Set(['home|Z','Z|Q','Z|H','home|H','Q|H']);
-const DEF={v:VER,cname:{},auto:{},start:'06:30',order:['apang','zhang','bridge','sanmao','jiangjun','lunch','rest','zhudong','babo','dinner','beipu','neiwan','qiu','laodian','market'],on:{apang:1,zhang:1,bridge:1,sanmao:1,jiangjun:1,lunch:1,rest:1,babo:1,dinner:1},dur:{},fix:{},act:{}};
+const DEF={v:VER,cname:{},auto:{},start:'08:30',order:['apang','zhang','bridge','sanmao','jiangjun','lunch','rest','zhudong','babo','dinner','beipu','neiwan','qiu','laodian','market'],on:{apang:1,zhang:1,bridge:1,sanmao:1,jiangjun:1,lunch:1,babo:1,dinner:1},dur:{},fix:{},act:{}};
 const clone=o=>JSON.parse(JSON.stringify(o));
 const HM=/^\d\d:\d\d$/;
 const okHM=s=>typeof s==='string'&&HM.test(s)&&+s.slice(0,2)<24&&+s.slice(3)<60;
@@ -230,6 +230,7 @@ function sanitize(s){
  if(!Number.isFinite(s.base)||!Object.keys(s.act).length)s.base=null;
  if(!okHM(s.start))s.start=DEF.start;
  if((s.v||0)<12){s.on.zhudong=0;s.on.rest=1;const ri=s.order.indexOf('rest');if(ri>=0)s.order.splice(ri,1);const ix=s.order.indexOf('lunch');if(ix>=0)s.order.splice(ix+1,0,'rest');}
+ if((s.v||0)<13){s.start='08:30';s.on.rest=0;delete s.dur.apang}
  s.v=VER;delete s.mode;return s;
 }
 const toM=s=>{const[a,b]=s.split(':').map(Number);return a*60+b};
