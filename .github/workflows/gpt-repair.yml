@@ -13,7 +13,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: gpt-qa-repair-${ github.event.workflow_run.id }
+  group: gpt-qa-repair-${{ github.event.workflow_run.id }}
   cancel-in-progress: false
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Verify API key and model access
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ { secrets.OPENAI_API_KEY }}}
         run: |
           if [ -z "$OPENAI_API_KEY" ]; then
             echo "::error::OPENAI_API_KEY is missing or unavailable."
@@ -52,14 +52,14 @@ jobs:
       - name: Checkout the failed commit
         uses: actions/checkout@v4
         with:
-          ref: ${ github.event.workflow_run.head_sha }
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
       - name: Download the failed run's QA artifact
         uses: actions/download-artifact@v4
         with:
-          github-token: ${ secrets.GITHUB_TOKEN }
-          run-id: ${ github.event.workflow_run.id }
+          github-token: ${{ secrets.GH_REPAIR_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
           name: qa-report-10-runs
           path: qa-input
 
@@ -88,7 +88,7 @@ jobs:
 
       - name: Ask OpenAI for a minimal unified diff
         env:
-          OPENAI_API_KEY: ${ secrets.OPENAI_API_KEY }
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: gpt-6.2-astra
         run: |
           if [ -z "$OPENAI_API_KEY" ]; then
@@ -152,9 +152,9 @@ jobs:
       - name: Create repair branch and pull request
         if: steps.patch.outputs.created == 'true'
         env:
-          GH_TOKEN: ${ secrets.GITHUB_TOKEN }
-          RUN_ID: ${ github.event.workflow_run.id }
-          FAILED_SHA: ${ github.event.workflow_run.head_sha }
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          FAILED_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           if [ -z "$GH_TOKEN" ]; then echo "::error::Missing GH_REPAIR_TOKEN secret"; exit 1; fi
           branch="gpt-repair/run-$RUN_ID"
@@ -169,8 +169,8 @@ jobs:
       - name: Publish diagnosis summary
         if: always()
         env:
-          RUN_ID: ${ github.event.workflow_run.id }
-          FAILED_SHA: ${ github.event.workflow_run.head_sha }
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          FAILED_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           {
             echo "## GPT QA diagnosis and repair"
