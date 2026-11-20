@@ -156,6 +156,7 @@ jobs:
           RUN_ID: ${ github.event.workflow_run.id }
           FAILED_SHA: ${ github.event.workflow_run.head_sha }
         run: |
+          if [ -z "$GH_TOKEN" ]; then echo "::error::Missing GH_REPAIR_TOKEN secret"; exit 1; fi
           branch="gpt-repair/run-$RUN_ID"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -163,7 +164,7 @@ jobs:
           git add index.html tests/smoke.cjs
           git commit -m "fix: GPT QA repair for run $RUN_ID"
           git push origin "$branch"
-          gh pr create --base main --head "$branch" --title "GPT QA repair for failed run $RUN_ID" --body "Automated repair proposal based on QA run $RUN_ID, failed commit $FAILED_SHA. This PR triggers the 10-run mobile regression suite. Review the diff and CI results before merging; Pages deployment is disabled for pull_request events."
+          gh pr create --base main --head "$branch" --title "GPT QA repair for failed run $RUN_ID" --body "Automated repair proposal based on QA run $RUN_ID, failed commit $FAILED_SHA. This PR triggers the 10-run mobile regression suite automatically using GH_REPAIR_TOKEN. Review the diff and CI results before merging; Pages deployment is disabled for pull_request events."
 
       - name: Publish diagnosis summary
         if: always()
