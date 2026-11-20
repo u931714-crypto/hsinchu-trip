@@ -32,7 +32,7 @@ jobs:
           assert '<html lang="zh-Hant">' in html, "Traditional Chinese document language missing"
           for required in ['id="map"', 'id="list"', 'id="next"', 'id="undoBar"', 'id="pool"']:
               assert required in html, f"Required UI element missing: {required}"
-          scripts = re.findall(r'<script(?![^>]*\\bsrc=)[^>]*>(.*?)</script>', html, re.S | re.I)
+          scripts = re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>', html, re.S | re.I)
           assert scripts, "No inline application script found"
           for i, script in enumerate(scripts):
               Path(f"/tmp/inline-{i}.js").write_text(script, encoding="utf-8")
