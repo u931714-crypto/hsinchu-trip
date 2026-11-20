@@ -14,10 +14,14 @@ https://u931714-crypto.github.io/hsinchu-trip/
 - 景點開放時間與衝突提醒
 - 行動裝置版面
 
+## 開發與品質檢查
+
+本專案由 ChatGPT 負責修改、Code Review、必要測試與錯誤修復。執行方式請參閱根目錄的 [checkMaps.skill](checkMaps.skill)。
+
+使用者可直接要求「執行 checkMaps」或提出網站修改需求；ChatGPT 應自行完成適當檢查、修復與 GitHub 提交，不要求使用者手動跑測試或核准部署。
+
 ## 部署
 
-推送至 `main` 分支後，GitHub Actions 會直接部署 GitHub Pages，不設置 QA／CI 閘門，也不需要手動啟動測試。
+推送至 `main` 分支後，GitHub Actions 只負責自動部署 GitHub Pages，不設置 CI／QA 閘門，也不需要手動啟動部署。
 
-如需了解非必要的 ChatGPT 輔助檢查方式，請參閱 [Lightweight QA 指引](docs/QA.md)。
-
-本專案不需要 OpenAI API，也不會自動修改正式程式碼。
+本專案不需要 OpenAI API，也不會由 GitHub Actions 自動修改正式程式碼。
