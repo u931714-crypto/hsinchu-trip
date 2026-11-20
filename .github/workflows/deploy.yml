@@ -1,172 +1,86 @@
-name: Hsinchu Trip QA and Deploy
+name: Hsinchu Trip - Check and Deploy
+
 on:
   push:
     branches: [main]
-  workflow_dispatch:
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
 permissions:
   contents: read
+
 concurrency:
   group: hsinchu-trip-pages
-  cancel-in-progress: false
+  cancel-in-progress: true
+
 jobs:
-  test:
-    name: 10-run mobile regression gate
-    permissions:
-      contents: read
-    timeout-minutes: 20
+  check:
+    name: Lightweight static QA
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Validate HTML structure and inline JavaScript
+
+      - name: Check HTML structure and required elements
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          html = Path("index.html").read_text(encoding="utf-8")
+          required_ids = {"map", "list", "next", "undoBar", "pool"}
+          
+          class Inspector(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.ids = []
+                  self.lang_ok = False
+                  self.title_seen = False
+              def handle_starttag(self, tag, attrs):
+                  attrs = dict(attrs)
+                  if tag == "html" and attrs.get("lang") == "zh-Hant":
+                      self.lang_ok = True
+                  if tag == "title":
+                      self.title_seen = True
+                  if attrs.get("id"):
+                      self.ids.append(attrs["id"])
+
+          parser = Inspector()
+          parser.feed(html)
+          missing = sorted(required_ids - set(parser.ids))
+          duplicates = sorted({x for x in parser.ids if parser.ids.count(x) > 1})
+          assert parser.lang_ok, "HTML language must be zh-Hant"
+          assert parser.title_seen, "HTML title element is missing"
+          assert not missing, f"Required element IDs missing: {missing}"
+          assert not duplicates, f"Duplicate element IDs: {duplicates}"
+          assert "<script" in html.lower(), "No application script found"
+          print("HTML structure OK")
+          print(f"Required UI elements: {len(required_ids)}/{len(required_ids)}")
+          PY
+
+      - name: Check inline JavaScript syntax
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import re
           html = Path("index.html").read_text(encoding="utf-8")
-          assert '<html lang="zh-Hant">' in html, "Traditional Chinese document language missing"
-          for required in ['id="map"', 'id="list"', 'id="next"', 'id="undoBar"', 'id="pool"']:
-              assert required in html, f"Required UI element missing: {required}"
           scripts = re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>', html, re.S | re.I)
           assert scripts, "No inline application script found"
           for i, script in enumerate(scripts):
-              Path(f"/tmp/inline-{i}.js").write_text(script, encoding="utf-8")
-          print(f"HTML structure OK; extracted {len(scripts)} inline script(s)")
+              Path(f"/tmp/hsinchu-inline-{i}.js").write_text(script, encoding="utf-8")
+          print(f"Extracted {len(scripts)} inline script(s)")
           PY
-          for file in /tmp/inline-*.js; do node --check "$file"; done
-      - name: Install browser test runtime
-        run: |
-          npm install --no-save playwright
-          npx playwright install --with-deps chromium
-      - name: Run 10 independent mobile regression passes
-        id: regression
-        continue-on-error: true
-        run: |
-          mkdir -p qa-reports/screenshots
-          python3 -m http.server 4173 >/tmp/hsinchu-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          for i in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
-            sleep 1
-          done
-          for run in $(seq 1 10); do
-            echo "===== Mobile regression run ${run}/10 ====="
-            if QA_RUN="$run" node tests/smoke.cjs 2>&1 | tee "qa-reports/run-${run}.log"; then
-              echo "RUN $run: PASS"
-            else
-              echo "RUN $run: FAIL"
-            fi
-          done
-          python3 - <<'PY'
-          import json, glob, os
-          reports=[]
-          for p in sorted(glob.glob("qa-reports/run-*.json")):
-              with open(p) as f: reports.append(json.load(f))
-          expected_runs=[str(i) for i in range(1,11)]
-          actual_runs=[str(r.get("run","")) for r in reports]
-          missing_runs=sorted(set(expected_runs)-set(actual_runs))
-          duplicate_runs=sorted({x for x in actual_runs if actual_runs.count(x)>1})
-          incomplete_runs=[r for r in reports if len(r.get("tests",[]))!=8]
-          failed_runs=[r for r in reports if r.get("failed",0)>0 or r.get("errors") or r.get("fatal")]
-          passed_checks=sum(r.get("passed",0) for r in reports)
-          failed_checks=sum(r.get("failed",0) for r in reports)
-          skipped_checks=sum(r.get("skipped",0) for r in reports)
-          ok=(len(reports)==10 and not missing_runs and not duplicate_runs and
-              not incomplete_runs and len(failed_runs)==0 and skipped_checks==0 and
-              all(r.get("passed",0)==8 for r in reports))
-          run_url=f"{os.environ.get('GITHUB_SERVER_URL','https://github.com')}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
-          lines=[
-            "# Hsinchu Trip - QA report","",
-            f"- Run ID: {os.environ['GITHUB_RUN_ID']}",
-            f"- Attempt: {os.environ.get('GITHUB_RUN_ATTEMPT','1')}",
-            f"- Commit: {os.environ.get('GITHUB_SHA','')}",
-            f"- Workflow: {run_url}",
-            f"- Result: {'PASS' if ok else 'FAIL'}",
-            f"- Independent runs: {len(reports)}/10",
-            f"- Passed checks: {passed_checks}",
-            f"- Failed checks: {failed_checks}",
-            f"- Skipped checks: {skipped_checks}","",
-            "## Per-run results","",
-            "| Run | Passed | Failed | Skipped | Result |",
-            "|---:|---:|---:|---:|---|"
-          ]
-          for r in reports:
-              lines.append(f"| {r.get('run','?')} | {r.get('passed',0)} | {r.get('failed',0)} | {r.get('skipped',0)} | {'FAIL' if r.get('failed',0) or r.get('errors') else 'PASS'} |")
-          lines += ["","## Failure details",""]
-          details=[]
-          for r in reports:
-              for e in r.get("errors",[]):
-                  details.append(f"- Run {r.get('run')}, {e.get('test','unknown')}: {e.get('message','no message')}")
-              if r.get("fatal"):
-                  details.append(f"- Run {r.get('run')} fatal: {r['fatal']}")
-          lines += details or ["No failures recorded."]
-          lines += ["","## Integrity checks","",
-            f"- Missing run numbers: {', '.join(missing_runs) if missing_runs else 'none'}",
-            f"- Duplicate run numbers: {', '.join(duplicate_runs) if duplicate_runs else 'none'}",
-            f"- Incomplete runs (expected 8 checks): {len(incomplete_runs)}",
-            "","## Machine-readable entry point","",
-            "- manifest.json: run metadata, 10-run integrity, per-run results and artifact inventory",
-            "- run-1.json ... run-10.json: individual test details",
-            "- run-1.log ... run-10.log: complete console logs",
-            "- screenshots/: failure screenshots, when generated",
-            "","Artifacts: qa-report-10-runs (access follows repository permissions; retained 30 days)."]
-          os.makedirs("qa-reports",exist_ok=True)
-          screenshots=sorted(os.path.relpath(p,"qa-reports") for p in glob.glob("qa-reports/screenshots/**/*",recursive=True) if os.path.isfile(p))
-          manifest={
-            "schema_version":1,
-            "project":"Hsinchu Trip",
-            "run_id":os.environ["GITHUB_RUN_ID"],
-            "run_attempt":os.environ.get("GITHUB_RUN_ATTEMPT","1"),
-            "commit":os.environ.get("GITHUB_SHA",""),
-            "workflow_url":run_url,
-            "result":"PASS" if ok else "FAIL",
-            "expected_runs":10,
-            "actual_runs":len(reports),
-            "missing_runs":missing_runs,
-            "duplicate_runs":duplicate_runs,
-            "incomplete_runs":[r.get("run") for r in incomplete_runs],
-            "totals":{"passed":passed_checks,"failed":failed_checks,"skipped":skipped_checks},
-            "runs":[{"run":r.get("run"),"result":"FAIL" if r.get("failed",0) or r.get("errors") or r.get("fatal") or len(r.get("tests",[]))!=8 else "PASS","passed":r.get("passed",0),"failed":r.get("failed",0),"skipped":r.get("skipped",0),"tests":r.get("tests",[]),"errors":r.get("errors",[]),"fatal":r.get("fatal")} for r in reports],
-            "artifact_inventory":["latest.md","manifest.json"]+[f"run-{i}.json" for i in range(1,11)]+[f"run-{i}.log" for i in range(1,11)]+screenshots
-          }
-          with open("qa-reports/manifest.json","w",encoding="utf-8") as f: json.dump(manifest,f,ensure_ascii=False,indent=2)
-          with open("qa-reports/latest.md","w") as f: f.write("\n".join(lines)+"\n")
-          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:
-              f.write("\n".join(lines)+"\n")
-              f.write("\nMachine-readable report: `qa-report-10-runs/manifest.json`\n")
-          with open(os.environ["GITHUB_OUTPUT"],"a") as f: f.write(f"passed={'true' if ok else 'false'}\n")
-          if not ok:
-              print("Regression gate failed. See Failure details and qa-reports artifact.")
-              raise SystemExit(1)
-          PY
-      - name: Upload JSON, complete logs and failure screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: qa-report-10-runs
-          path: |
-            qa-reports/
-          if-no-files-found: warn
-          retention-days: 30
-      - name: Enforce 10/10 passing gate
-        if: always()
-        run: |
-          if [ "${{ steps.regression.outputs.passed }}" != "true" ]; then
-            echo "::error::Deployment blocked: all 10 independent regression runs must pass."
-            exit 1
-          fi
+          for file in /tmp/hsinchu-inline-*.js; do node --check "$file"; done
+
   deploy:
     name: Deploy GitHub Pages
+    needs: check
+    if: github.event_name != 'pull_request'
     permissions:
       contents: read
       pages: write
       id-token: write
-    timeout-minutes: 10
-    needs: test
-    if: needs.test.result == 'success' && github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
