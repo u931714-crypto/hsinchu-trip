@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>11/21（六）新竹一日遊 v10</title>
+<title>11/21（六）新竹一日遊 v12</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" media="print" onload="this.media='all'">
 <style>
 :root{--bg:#f3eee4;--card:#fffdf8;--ink:#22201b;--sub:#5f5c54;--line:#e0d9c9;--must:#b8532e;--mustTxt:#a8462a;--mustbg:#f6e3d9;--opt:#4a6b55;--optTxt:#3f6049;--optbg:#e2ebe3;--acc:#2e4a6b;--warn:#a32d2d;--warnbg:#fbe9e9;--onc:#fff;--wait:#8a5a0b;--waitbg:#faeeda}
@@ -184,7 +184,7 @@ const I={
  car:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M3 16h18M7 19v-3M17 19v-3"/><circle cx="8" cy="13" r=".8"/><circle cx="16" cy="13" r=".8"/></svg>',
  walk:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2-6 3 3v3M12 15l-1-5 3-2 2 4 3 1M11 10l-3 2v3"/></svg>',
  map:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'};
-const TRIP='2026-11-21',TRIP_DOW=6,VER=11,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
+const TRIP='2026-11-21',TRIP_DOW=6,VER=12,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
 const HOME={name:'新竹縣政府',q:'新竹縣政府 竹北市光明六路10號',lat:24.8269,lng:121.0129,addr:'竹北市光明六路10號'};
 const P={
  apang:{name:'阿胖豆漿',q:'阿胖豆漿 新竹縣竹東鎮東寧路三段56號',lat:24.7375,lng:121.0905,c:'Z',dur:50,type:'must',open:'05:30',close:'11:00',closed:[1],addr:'竹東鎮東寧路三段56號',note:'粄條韭菜蛋餅；吃輕再上山'},
@@ -229,7 +229,7 @@ function sanitize(s){
  for(const id in s.auto)if(s.act[id]==null)delete s.auto[id];
  if(!Number.isFinite(s.base)||!Object.keys(s.act).length)s.base=null;
  if(!okHM(s.start))s.start=DEF.start;
- if((s.v||0)<11){s.on.zhudong=0;s.on.rest=1;const ix=s.order.indexOf('lunch');if(ix>=0&&!s.order.includes('rest'))s.order.splice(ix+1,0,'rest');}
+ if((s.v||0)<12){s.on.zhudong=0;s.on.rest=1;const ri=s.order.indexOf('rest');if(ri>=0)s.order.splice(ri,1);const ix=s.order.indexOf('lunch');if(ix>=0)s.order.splice(ix+1,0,'rest');}
  s.v=VER;delete s.mode;return s;
 }
 const toM=s=>{const[a,b]=s.split(':').map(Number);return a*60+b};
