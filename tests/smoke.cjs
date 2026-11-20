@@ -23,7 +23,7 @@ const path = require('path');
   const check = (name, fn) => async () => {
     try {
       const detail = await fn();
-      results.push({ test: name, status: 'PASS', ...(detail || {}) });
+      results.push({ test: name, status: detail && detail.skipped ? 'SKIP' : 'PASS', ...(detail || {}) });
     } catch (e) {
       errors.push({ test: name, message: e.message });
       results.push({ test: name, status: 'FAIL', message: e.message });
