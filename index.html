@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>11/21（六）新竹一日遊 v15</title>
+<title>11/21（六）新竹一日遊 v16</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" media="print" onload="this.media='all'">
 <style>
 :root{--bg:#f3eee4;--card:#fffdf8;--ink:#22201b;--sub:#5f5c54;--line:#e0d9c9;--must:#b8532e;--mustTxt:#a8462a;--mustbg:#f6e3d9;--opt:#4a6b55;--optTxt:#3f6049;--optbg:#e2ebe3;--acc:#2e4a6b;--warn:#a32d2d;--warnbg:#fbe9e9;--onc:#fff;--wait:#8a5a0b;--waitbg:#faeeda}
@@ -149,7 +149,7 @@ html{scroll-padding-bottom:76px;scroll-padding-top:60px}
 <div class="sum" id="sum" role="region" aria-label="行程摘要"></div><div class="sr" id="srlive" role="status" aria-live="polite"></div>
 <main>
 <div class="hdr">
-<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v15｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
+<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v16｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
 <button id="mode" aria-pressed="false">✏️ 編輯</button>
 </div>
 
@@ -162,6 +162,7 @@ html{scroll-padding-bottom:76px;scroll-padding-top:60px}
 <div class="bar edit-only">
 <label>出發 <input type="time" id="start" step="300"></label>
 <button id="undoBar" disabled>↶ 復原</button><button id="clearAct">清除實到</button>
+<button id="copyPlan">📋 複製行程</button><button id="ghPlan">💾 存到 GitHub</button>
 </div>
 
 <div class="leg">🏠 新竹縣政府 出發 <span id="st0"></span></div>
@@ -172,7 +173,7 @@ html{scroll-padding-bottom:76px;scroll-padding-top:60px}
 
 <div class="foot">
 車程為估算（含停車約 10 分）；藍線為道路行車路線（需網路）；若路線服務暫時無法連線，會以虛線顯示站點連線示意。導航請按「導航」。清泉吊橋、三毛夢屋、將軍湯拆成獨立步行點，地圖位置以清泉吊橋附近示意；營業及開放狀態請以現場公告為準。阿胖、故居週一休；蕭如松週二休；三毛夢屋週三休。<br>
-v15｜08:30 出發；阿胖豆漿外帶（車上吃）；午餐在清泉；午餐後直接開車回縣政府（取消抱石與新竹站晚餐）。<br>編輯模式：拖曳 ≡ 或 ↑↓ 排序、±分鐘調停留、設「最早開始」會自動插入等待。改錯可按「↶ 復原」。<span class="edit-only"> <button class="resetlink" id="reset">重置成預設行程</button></span>
+v15｜08:30 出發；阿胖豆漿外帶（車上吃）；午餐在清泉；午餐後直接開車回縣政府（取消抱石與新竹站晚餐）。<br>編輯模式：拖曳 ≡ 或 ↑↓ 排序、±分鐘調停留、設「最早開始」會自動插入等待。改錯可按「↶ 復原」。「📋 複製行程」可貼給 Claude；「💾 存到 GitHub」會開 GitHub Issue 存檔。<span class="edit-only"> <button class="resetlink" id="reset">重置成預設行程</button></span>
 </div>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="undoBtn">復原</button></div>
@@ -184,7 +185,7 @@ const I={
  car:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M3 16h18M7 19v-3M17 19v-3"/><circle cx="8" cy="13" r=".8"/><circle cx="16" cy="13" r=".8"/></svg>',
  walk:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2-6 3 3v3M12 15l-1-5 3-2 2 4 3 1M11 10l-3 2v3"/></svg>',
  map:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'};
-const TRIP='2026-11-21',TRIP_DOW=6,VER=15,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
+const TRIP='2026-11-21',TRIP_DOW=6,VER=16,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
 const HOME={name:'新竹縣政府',q:'新竹縣政府 竹北市光明六路10號',lat:24.8269,lng:121.0129,addr:'竹北市光明六路10號'};
 const P={
  apang:{name:'阿胖豆漿',q:'阿胖豆漿 新竹縣竹東鎮東寧路三段56號',lat:24.7375,lng:121.0905,c:'Z',dur:10,type:'must',open:'05:30',close:'11:00',closed:[1],addr:'竹東鎮東寧路三段56號',note:'外帶：粄條韭菜蛋餅，車上吃；吃輕再上山'},
@@ -489,6 +490,32 @@ document.addEventListener('focusout',e=>{
   if((S.fix[id]||'')===v)return;snap();if(v)S.fix[id]=v;else delete S.fix[id];save();
   pendMsg=v?`${short(id)} 最早 ${v} 開始`:`已清除 ${short(id)} 最早開始`;clearTimeout(pendT);pendT=setTimeout(flush,400)}
 });
+/* export: copy plan / save to GitHub issue */
+const REPO='u931714-crypto/hsinchu-trip';
+function exportText(){
+ const C=compute(S,false),L=[`新竹一日遊行程匯出｜v${VER}｜${TRIP}`,`${S.start} 從新竹縣政府出發`];
+ C.en.forEach(id=>{const r=C.res[id];L.push(`${r.n}. ${nm(id)} ${toS(r.arr)}–${toS(r.dep)}（停 ${durOf(S,id)} 分）${S.fix[id]?'｜最早 '+S.fix[id]:''}${r.w.length?'｜⚠ '+r.w.join('；'):''}`)});
+ L.push(`${toS(C.end)} 回到新竹縣政府`);
+ const pool=S.order.filter(id=>!S.on[id]).map(nm);if(pool.length)L.push('備選：'+pool.join('、'));
+ const data={v:VER,start:S.start,order:S.order,on:S.on,dur:S.dur,fix:S.fix,cname:S.cname};
+ L.push('','（以下是給 Claude 讀的資料，請勿修改）','HCTRIP '+JSON.stringify(data));
+ return L.join('\n');
+}
+async function copyPlan(){
+ const t=exportText(),done=()=>toast('已複製行程，貼給 Claude 就可以',null);
+ try{await navigator.clipboard.writeText(t);done();return}catch(e){}
+ const ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(ta);ta.select();
+ let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();
+ if(ok)done();else prompt('請手動複製以下內容：',t);
+}
+function ghPlan(){
+ const d=new Date(),p=n=>String(n).padStart(2,'0'),ts=`${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+ const url=`https://github.com/${REPO}/issues/new?title=${encodeURIComponent('行程存檔 '+ts)}&body=${encodeURIComponent(exportText())}`;
+ window.open(url,'_blank','noopener');
+ toast('在 GitHub 頁面按「Create」就存好了',null);
+}
+$('copyPlan').onclick=copyPlan;
+$('ghPlan').onclick=ghPlan;
 $('mode').onclick=()=>{MODE=MODE==='edit'?'view':'edit';render()};
 $('undoBar').onclick=undo;
 $('reset').onclick=()=>{if(!confirm('重置成預設行程？（之後仍可按「復原」）'))return;edit('已重置',()=>{S=clone(DEF)})};
