@@ -1,29 +1,23 @@
-name: Deploy Hsinchu Trip Planner
-
+name: Hsinchu Trip QA and Deploy
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
-
 concurrency:
-  group: pages
-  cancel-in-progress: true
-
+  group: hsinchu-trip-pages
+  cancel-in-progress: false
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  test:
+    name: 10-run mobile regression gate
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Validate inline JavaScript and required app structure
+      - name: Validate HTML structure and inline JavaScript
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -43,35 +37,107 @@ jobs:
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
-      - name: Run mobile browser smoke tests
+      - name: Run 10 independent mobile regression passes
+        id: regression
+        continue-on-error: true
         run: |
+          mkdir -p qa-reports/screenshots
           python3 -m http.server 4173 >/tmp/hsinchu-http.log 2>&1 &
-          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
-          mkdir -p qa-reports
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
           for run in $(seq 1 10); do
             echo "===== Mobile regression run \${run}/10 ====="
-            node tests/smoke.cjs | tee "qa-reports/run-\${run}.log"
-            cp qa-report.json "qa-reports/run-\${run}.json"
+            if QA_RUN="$run" node tests/smoke.cjs 2>&1 | tee "qa-reports/run-\${run}.log"; then
+              echo "RUN $run: PASS"
+            else
+              echo "RUN $run: FAIL"
+            fi
           done
           python3 - <<'PY'
           import json, glob, os
-          reports=[json.load(open(p)) for p in sorted(glob.glob("qa-reports/run-*.json"))]
-          total=sum(r["passed"] for r in reports)
-          skipped=sum(r["skipped"] for r in reports)
-          with open("qa-reports/summary.json","w") as f:
-              json.dump({"runs":len(reports),"passed_checks":total,"skipped_checks":skipped,"failed_runs":0},f,indent=2)
-          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:
-              f.write("# Hsinchu Trip QA - 10-run regression\n\n")
-              f.write(f"- Runs: **{len(reports)}/10**\n- Passed checks: **{total}**\n- Skipped checks: **{skipped}**\n- Failed runs: **0**\n\n")
-              f.write("Detailed JSON and logs are attached as the qa-report-10-runs artifact for GPT review.\n")
+          reports=[]
+          for p in sorted(glob.glob("qa-reports/run-*.json")):
+              with open(p) as f: reports.append(json.load(f))
+          failed_runs=[r for r in reports if r.get("failed",0)>0 or r.get("errors")]
+          passed_checks=sum(r.get("passed",0) for r in reports)
+          failed_checks=sum(r.get("failed",0) for r in reports)
+          skipped_checks=sum(r.get("skipped",0) for r in reports)
+          ok=len(reports)==10 and len(failed_runs)==0
+          run_url=f"{os.environ.get('GITHUB_SERVER_URL','https://github.com')}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          lines=[
+            "# Hsinchu Trip - QA report","",
+            f"- Run ID: {os.environ['GITHUB_RUN_ID']}",
+            f"- Attempt: {os.environ.get('GITHUB_RUN_ATTEMPT','1')}",
+            f"- Commit: {os.environ.get('GITHUB_SHA','')}",
+            f"- Workflow: {run_url}",
+            f"- Result: {'PASS' if ok else 'FAIL'}",
+            f"- Independent runs: {len(reports)}/10",
+            f"- Passed checks: {passed_checks}",
+            f"- Failed checks: {failed_checks}",
+            f"- Skipped checks: {skipped_checks}","",
+            "## Per-run results","",
+            "| Run | Passed | Failed | Skipped | Result |",
+            "|---:|---:|---:|---:|---|"
+          ]
+          for r in reports:
+              lines.append(f"| {r.get('run','?')} | {r.get('passed',0)} | {r.get('failed',0)} | {r.get('skipped',0)} | {'FAIL' if r.get('failed',0) or r.get('errors') else 'PASS'} |")
+          lines += ["","## Failure details",""]
+          details=[]
+          for r in reports:
+              for e in r.get("errors",[]):
+                  details.append(f"- Run {r.get('run')}, {e.get('test','unknown')}: {e.get('message','no message')}")
+              if r.get("fatal"):
+                  details.append(f"- Run {r.get('run')} fatal: {r['fatal']}")
+          lines += details or ["No failures recorded."]
+          lines += ["","Artifacts: qa-report-10-runs contains JSON, full logs, and failure screenshots."]
+          os.makedirs("qa-reports",exist_ok=True)
+          with open("qa-reports/latest.md","w") as f: f.write("\n".join(lines)+"\n")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f: f.write("\n".join(lines)+"\n")
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f: f.write(f"passed={'true' if ok else 'false'}\n")
+          if not ok:
+              print("Regression gate failed. See Failure details and qa-reports artifact.")
+              raise SystemExit(1)
           PY
-      - name: Upload QA reports
+      - name: Upload JSON, complete logs and failure screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: qa-report-10-runs
-          path: qa-reports/
+          path: |
+            qa-reports/
+            /tmp/hsinchu-http.log
           if-no-files-found: warn
+          retention-days: 30
+      - name: Publish latest report for GPT review
+        if: always() && hashFiles('qa-reports/latest.md') != ''
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(qa): publish latest automated test report"
+          branch: qa-reports
+          create_branch: true
+          file_pattern: qa-reports/latest.md
+      - name: Enforce 10/10 passing gate
+        if: always()
+        run: |
+          if [ "\${{ steps.regression.outputs.passed }}" != "true" ]; then
+            echo "::error::Deployment blocked: all 10 independent regression runs must pass."
+            exit 1
+          fi
+  deploy:
+    name: Deploy GitHub Pages
+    needs: test
+    if: needs.test.result == 'success'
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site
