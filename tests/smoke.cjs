@@ -77,7 +77,7 @@ const path = require('path');
       if (!(await card.count())) return { skipped: true, reason: 'No alternative stop available' };
       const id = await card.getAttribute('data-id');
       await card.locator('[data-addback]').click();
-      if (!(await page.locator('#list .card').evaluateAll(cards => cards.some(c => c.dataset.id === id)))) throw new Error('Add-back failed');
+      if (!(await page.locator('#list .card').evaluateAll((cards, targetId) => cards.some(c => c.dataset.id === targetId), id))) throw new Error('Add-back failed');
       await page.locator('#undoBar').click();
     })();
 
