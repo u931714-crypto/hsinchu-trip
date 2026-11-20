@@ -530,7 +530,7 @@ function drawMap(C){
   bounds=L.latLngBounds(road);map.fitBounds(bounds,{padding:[30,30]});
  };
  if(routeCache.has(coords)){showRoad(routeCache.get(coords));return}
- if(routePending.has(coords)){routePending.get(coords).then(road=>{if(road)showRoad(road)});return}
+ if(routePending.has(coords))return
  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
  const request=fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`,{signal:controller.signal})
   .then(r=>{if(!r.ok)throw new Error('route');return r.json()})
