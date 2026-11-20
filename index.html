@@ -319,10 +319,11 @@ function progress(C,now){
  const cur=li>=0&&C.res[en[li]].dep>now.m?en[li]:null;
  return{en,li,cur,nx:en[li+1]||null,clock:false};
 }
+let justAdded=null;
 function skipHint(C){
  const mustBad=C.W.some(w=>P[w.id].type==='must');if(!mustBad)return null;
  let best=null;
- C.en.forEach((id,i)=>{if(i<=C.li||P[id].type==='must')return;
+ C.en.forEach((id,i)=>{if(i<=C.li||P[id].type==='must'||id===justAdded)return;
   const st=clone(S);st.on[id]=0;const c=compute(st,true,liveFloor(nowInfo()));
   if(!best||c.pen<best.pen)best={id,pen:c.pen,ok:!c.W.some(w=>P[w.id].type==='must'),save:C.end-c.end}});
  return best&&best.pen<C.pen?best:null;
@@ -356,7 +357,7 @@ function cardHTML(id,r,inPool,en,pg,now){
 }
 function render(){
  const fa=document.activeElement,fk=fa&&fa.dataset&&fa.dataset.a&&fa.closest('.card')?{id:fa.closest('.card').dataset.id,a:fa.dataset.a,v:fa.dataset.v||'',idx:S.order.filter(x=>S.on[x]).indexOf(fa.closest('.card').dataset.id)}:null;
- clearTimeout(pendT);pendT=null;if(pendMsg){const m=pendMsg;pendMsg='';setTimeout(()=>toast(m),0)}const now=nowInfo(),C=compute(S,true,liveFloor(now)),plan=compute(S,false),pg=progress(C,now);
+ clearTimeout(pendT);pendT=null;if(pendMsg){const m=pendMsg;pendMsg='';setTimeout(()=>toast(m),0)}const now=nowInfo(),C0=compute(S,true,null),pg0=progress(C0,now),isStale=!pg0.clock&&pg0.nx&&now.on&&now.m-C0.res[pg0.nx].arr>45,C=isStale?C0:compute(S,true,liveFloor(now)),plan=compute(S,false),pg=isStale?pg0:progress(C,now);
  document.body.className=MODE;
  $('mode').textContent=MODE==='edit'?'✓ 完成':'✏️ 編輯';$('mode').setAttribute('aria-pressed',MODE==='edit');
  $('meta').textContent=MODE==='edit'?'編輯中：可勾選、排序、調時間':'今天的行程，照順序走';
@@ -371,7 +372,7 @@ function render(){
  $('endrow').innerHTML=`<div class="leg${C.endLeg.walk?' walk':''}" style="padding-left:0">${C.endLeg.walk?I.walk:I.car+' '+C.endLeg.m+' 分'}</div>🏠 <b>${toS(endP)}</b> 回到新竹縣政府`;
  const dh=Math.floor(C.drive/60),dm=C.drive%60,dlt=endP-(Number.isFinite(S.base)?S.base:plan.end),hasAct=anyAct();
  let sm=`<div class="sumtxt"><span>回到 <b>${toS(endP)}</b></span>`;
- if(hasAct||Number.isFinite(S.base))sm+=dlt>0?`<span class="late">比原定晚 ${dlt} 分</span>`:dlt<0?`<span class="ahead">比原定早 ${-dlt} 分</span>`:'<span class="ahead">準時</span>';
+ if(hasAct||Number.isFinite(S.base))sm+=dlt>0?`<span class="late">比原定晚 ${dlt} 分</span>`:dlt<0?`<span class="ahead">比原定早 ${-dlt} 分</span>`:(C.miss.length?'':'<span class="ahead">準時</span>');
  const nW=C.W.length+C.miss.length,first=C.miss[0]||(C.W[0]&&C.W[0].id);
  sm+=nW?`<button class="st bad" data-go="${first}" aria-label="${nW} 個問題，跳到第一個">⚠ ${nW} 個問題</button>`:'<span class="ok">✓ 無衝突</span>';
  sm+=`<span class="drv">出發 <b>${S.start}</b></span><span class="drv">車程 <b>${dh?dh+'h':''}${dm}m</b></span></div><button class="mapbtn" id="toMap" aria-label="捲到地圖">${I.map}</button>`;
@@ -399,7 +400,7 @@ function renderNext(C,now,pg){
   if(pg.cur)h+=`<div class="lbl">照原定，現在（${toS(now.m)}）應在</div><div class="nn">${C.res[pg.cur].n}. ${short(pg.cur)}</div><div class="info">到 ${toS(C.res[pg.cur].dep)} 離開</div><div class="row2"><button data-arrive="${pg.cur}">✓ 我在${short(pg.cur)}</button></div>`;
  }else if(pg.cur)h+=`<div class="lbl">現在（${toS(now.m)}）在</div><div class="nn">${short(pg.cur)}</div><div class="info">預計 ${toS(C.res[pg.cur].dep)} 離開</div>`;
 let stale=false;if(!pg.clock&&pg.nx){const r0=compute(S,true,null).res[pg.nx];stale=now.m-r0.arr>45}
- if(stale){const cand=en.slice(pg.li+1,pg.li+4);
+ if(stale){const rest=en.slice(pg.li+1),C0=compute(S,true,null);let k=rest.findIndex(x=>C0.res[x].dep>now.m);if(k<0)k=rest.length-1;const cand=rest.slice(Math.max(0,k-1),k+2);
   h+=`<div class="lbl">已超過「${short(pg.nx)}」的預定時間</div><div class="nn">你現在在哪？</div><div class="row2" style="flex-wrap:wrap">${cand.map(x=>`<button data-arrive="${x}">✓ 我在${short(x)}</button>`).join('')}</div><div class="info">前面沒按的站會標「？未確認」，沒去的可以在清單按「其實沒去」。</div>`}
  else if(pg.nx){const r=C.res[pg.nx],ref=S.baseArr&&Number.isFinite(S.baseArr[pg.nx])?S.baseArr[pg.nx]:plan.res[pg.nx].arr,dl=r.arr-ref,lateTxt=dl>120?'已超過預定時間':'比原定晚 '+dl+' 分';
   h+=`<div class="lbl"${pg.cur?' style="margin-top:10px"':''}>${pg.cur?'接下來':'下一站'}</div><div class="nn">${r.n}. ${nm(pg.nx)}</div><div class="info">預計 ${toS(r.arr)} 到${dl>0&&!pg.clock?`<span class="late">（${lateTxt}）</span>`:''}｜${addrOf(pg.nx)}</div>`;
@@ -457,11 +458,13 @@ document.addEventListener('click',e=>{
 });
 function addBack(id){const pa=planAdd(id);
    if(!pa){toast('現在時間之後已排不進 '+short(id),null);return false}
+   const rw=pa.c.res[id]&&pa.c.res[id].w||[];if(rw.some(x=>x.startsWith('抵達時已打烊')||x==='當天休館')){toast(`${short(id)} ${P[id].close?P[id].close+' 已打烊，':''}今天排不進了`,null);return false}
+   const at=pa.c.res[id]?toS(pa.c.res[id].arr):'';
    const pos=pa.o.filter(x=>x===id||(pa.st.on[x])).indexOf(id)+1;
-   let msg=pa.replaced?`已用 ${short(id)} 取代 ${short(pa.replaced)}（第 ${pos} 站）；回家 ${toS(pa.before.end)} → ${toS(pa.c.end)}`
-    :pa.bad?(()=>{const nw=pa.c.W.find(w=>!pa.before.W.some(v=>v.id===w.id&&v.x===w.x));return `${short(id)} 排在第 ${pos} 站，但會造成：${nw?short(nw.id)+' '+nw.x.replace(/（.*）/,''):'時間衝突'}。可略過其他站或按復原`})()
-    :`已加入 ${short(id)}（第 ${pos} 站）；回家 ${toS(pa.before.end)} → ${toS(pa.c.end)}`;
-   lastId=id;edit(msg,()=>{S.order=pa.o;S.on[id]=1;if(pa.replaced)S.on[pa.replaced]=0})
+   let msg=pa.replaced?`已用 ${short(id)} 取代 ${short(pa.replaced)}（第 ${pos} 站，${at} 到）；回家 ${toS(pa.before.end)} → ${toS(pa.c.end)}`
+    :pa.bad?(()=>{const nw=pa.c.W.find(w=>!pa.before.W.some(v=>v.id===w.id&&v.x===w.x));return `${short(id)} 排在第 ${pos} 站（${at} 到），但會造成：${nw?short(nw.id)+' '+nw.x.replace(/（.*）/,''):'時間衝突'}。可略過其他站或按復原`})()
+    :`已加入 ${short(id)}（第 ${pos} 站，${at} 到）；回家 ${toS(pa.before.end)} → ${toS(pa.c.end)}`;
+   lastId=id;justAdded=id;edit(msg,()=>{S.order=pa.o;S.on[id]=1;if(pa.replaced)S.on[pa.replaced]=0})
  return true}
 document.addEventListener('change',e=>{
  const el=e.target;
