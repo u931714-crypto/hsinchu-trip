@@ -15,3 +15,7 @@ https://u931714-crypto.github.io/hsinchu-trip/
 - 拖曳調整順序、抵達紀錄、復原
 - 景點開放時間與衝突提醒
 - 行動裝置版面
+
+
+## 部署狀態
+GitHub Pages 使用 GitHub Actions 部署；推送至 `main` 會觸發發布流程。
