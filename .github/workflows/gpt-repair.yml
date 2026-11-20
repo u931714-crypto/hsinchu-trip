@@ -1,6 +1,7 @@
 name: GPT QA Triage and Repair
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: ["Hsinchu Trip QA and Deploy"]
     types: [completed]
@@ -16,8 +17,36 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify-openai-api:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify API key and model access
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "::error::OPENAI_API_KEY is missing or unavailable."
+            exit 1
+          fi
+          code=$(curl --silent --show-error --output response.json --write-out "%{http_code}" https://api.openai.com/v1/responses -H "Authorization: Bearer $OPENAI_API_KEY" -H "Content-Type: application/json" -d '{"model":"gpt-6.2-astra","input":"Reply with exactly: API_OK","max_output_tokens":20,"store":false}')
+          if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
+            echo "::error::OpenAI API verification failed with HTTP $code"
+            python3 -c 'import json; d=json.load(open("response.json")); print(json.dumps(d.get("error",d),ensure_ascii=False)[:3000])' || true
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          d=json.load(open("response.json"))
+          out="".join(c.get("text","") for i in d.get("output",[]) if i.get("type")=="message" for c in i.get("content",[]) if c.get("type")=="output_text").strip()
+          print("OpenAI Responses API verified; response:",out)
+          if "API_OK" not in out: raise SystemExit("Unexpected model response")
+          PY
+          echo "## OpenAI API verification" >> "$GITHUB_STEP_SUMMARY"
+          echo "Responses API authentication and model access succeeded." >> "$GITHUB_STEP_SUMMARY"
+
   diagnose-and-open-repair-pr:
-    if: github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.event == 'push'
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the failed commit
