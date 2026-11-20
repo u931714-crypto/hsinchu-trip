@@ -490,7 +490,7 @@ $('reset').onclick=()=>{if(!confirm('重置成預設行程？（之後仍可按�
 $('clearAct').onclick=()=>{if(!Object.keys(S.act).length){toast('沒有實到紀錄',null);return}edit('已清除實到紀錄',()=>{S.act={};S.auto={};S.go=null;S.base=null;S.baseArr=null;S.anchor=null})};
 
 /* map */
-let map,layer,bounds,markers={},sortable,failT,routeSeq=0,routeLine=null,routeInfo=null;
+let map,layer,bounds,markers={},sortable,failT,routeSeq=0,routeLine=null,routeInfo=null,activeRouteKey='',routeCache=new Map(),routePending=new Map();
 function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
 function initMap(){
  if(!window.L||map)return;clearTimeout(failT);
@@ -522,15 +522,25 @@ function drawMap(C){
  L.polyline(pts,{color:cssv('--acc'),weight:2,opacity:.28,dashArray:'3 8',lineCap:'round'}).addTo(layer);
  if(routeInfo)routeInfo.textContent='道路行車路線載入中…';
  const coords=pts.map(([lat,lng])=>`${lng},${lat}`).join(';');
- fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`)
+ activeRouteKey=coords;
+ const showRoad=road=>{
+  if(activeRouteKey!==coords||!map)return;
+  routeLine=L.polyline(road,{color:'#2477c7',weight:5,opacity:.9,lineCap:'round',lineJoin:'round'}).addTo(layer).bringToFront();
+  if(routeInfo)routeInfo.textContent='藍線＝道路行車路線（OSRM／OpenStreetMap）';
+  bounds=L.latLngBounds(road);map.fitBounds(bounds,{padding:[30,30]});
+ };
+ if(routeCache.has(coords)){showRoad(routeCache.get(coords));return}
+ if(routePending.has(coords)){routePending.get(coords).then(road=>{if(road)showRoad(road)});return}
+ const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
+ const request=fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`,{signal:controller.signal})
   .then(r=>{if(!r.ok)throw new Error('route');return r.json()})
-  .then(data=>{if(seq!==routeSeq)return;if(data.code!=='Ok'||!data.routes?.[0]?.geometry?.coordinates?.length)throw new Error('route');
-   const road=data.routes[0].geometry.coordinates.map(([lng,lat])=>[lat,lng]);
-   routeLine=L.polyline(road,{color:'#2477c7',weight:5,opacity:.9,lineCap:'round',lineJoin:'round'}).addTo(layer).bringToFront();
-   if(routeInfo)routeInfo.textContent='藍線＝道路行車路線（OSRM／OpenStreetMap）';
-   bounds=L.latLngBounds(road);map.fitBounds(bounds,{padding:[30,30]});
-  })
-  .catch(()=>{if(seq!==routeSeq)return;if(routeInfo)routeInfo.textContent='道路路線暫時無法載入；虛線為站點連線示意';});
+  .then(data=>{if(data.code!=='Ok'||!data.routes?.[0]?.geometry?.coordinates?.length)throw new Error('route');return data.routes[0].geometry.coordinates.map(([lng,lat])=>[lat,lng])})
+  .catch(()=>null).finally(()=>{clearTimeout(timeout);routePending.delete(coords)});
+ routePending.set(coords,request);
+ request.then(road=>{
+  if(road){routeCache.set(coords,road);if(routeCache.size>5)routeCache.delete(routeCache.keys().next().value);showRoad(road)}
+  else if(activeRouteKey===coords&&routeInfo)routeInfo.textContent='道路路線暫時無法載入；虛線為站點連線示意';
+ });
 }
 function km(a,b){const R=6371,r=Math.PI/180,dl=(b.lat-a.lat)*r,dn=(b.lng-a.lng)*r;const x=Math.sin(dl/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
 function fit(){if(map&&bounds)map.fitBounds(bounds,{padding:[30,30]})}
