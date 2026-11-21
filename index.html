@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>11/21（六）新竹一日遊 v21</title>
+<title>11/21（六）新竹一日遊 v22</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" media="print" onload="this.media='all'">
 <style>
 :root{--bg:#f3eee4;--card:#fffdf8;--ink:#22201b;--sub:#5f5c54;--line:#e0d9c9;--must:#b8532e;--mustTxt:#a8462a;--mustbg:#f6e3d9;--opt:#4a6b55;--optTxt:#3f6049;--optbg:#e2ebe3;--acc:#2e4a6b;--warn:#a32d2d;--warnbg:#fbe9e9;--onc:#fff;--wait:#8a5a0b;--waitbg:#faeeda}
@@ -159,6 +159,24 @@ body.dragging .card .phs{display:none}
 .post img{width:100%;max-height:70vh;object-fit:cover;border-radius:8px;display:block;cursor:pointer;background:var(--line)}
 .post textarea{width:100%;font:inherit;font-size:16px;margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);resize:vertical}
 .phm,.leaflet-container .leaflet-marker-pane img.phm{width:40px;height:40px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45);display:block}
+.exp{margin-top:18px}
+.exp .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.extot{font-weight:700;font-size:18px}
+.exform{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
+.exform input,.exform select,#exPpl{font:inherit;font-size:16px;min-height:44px;padding:4px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+#exAmt{flex:1;min-width:0;font-weight:700}#exNote{flex:1;min-width:0}#exStop{max-width:48%}#exPpl{width:72px}
+.excats{margin:8px 0 0}
+.excats button{min-height:40px;font-size:14px;padding:4px 10px;border-radius:99px}
+.excats button[aria-pressed=true]{background:var(--acc);color:var(--onc);border-color:var(--acc)}
+.exbar{display:grid;grid-template-columns:auto 1fr auto;gap:4px 8px;align-items:center;font-size:14px;margin:8px 0}
+.exbar i{display:block;height:8px;border-radius:4px;background:var(--acc);opacity:.7}
+.exlist{list-style:none;margin-top:6px}
+.exlist li{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
+.exlist .ext{color:var(--sub);font-size:13px;min-width:42px}
+.exlist .exn{flex:1;min-width:0}
+.exlist .exn small{display:block;color:var(--sub);font-size:13px}
+.exlist .exa{font-weight:700;white-space:nowrap}
+.exs{font-size:14px;color:var(--sub);white-space:nowrap}
 #lb{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:4000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
 #lb.show{display:flex}
 #lb img{max-width:100%;max-height:calc(100vh - 150px);object-fit:contain;border-radius:6px}
@@ -174,7 +192,7 @@ body.dragging .card .phs{display:none}
 <div class="sum" id="sum" role="region" aria-label="行程摘要"></div><div class="sr" id="srlive" role="status" aria-live="polite"></div>
 <main>
 <div class="hdr">
-<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v21｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
+<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v22｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
 <button id="mode" aria-pressed="false">✏️ 編輯</button>
 </div>
 
@@ -197,11 +215,19 @@ body.dragging .card .phs{display:none}
 
 <section class="blog" id="blog" aria-label="旅遊日誌"><div class="bloghd"><h2>📔 旅遊日誌</h2><div class="row" style="margin:0"><button class="pri" data-snap="cam">📷 拍照記錄</button><button data-snap="lib">🖼 從相簿加</button></div></div><div id="posts"></div><div class="row" id="blogFoot"></div></section>
 
+<section class="exp" id="exp" aria-label="記帳"><div class="bloghd"><h2>💰 記帳</h2><span id="exTot" class="extot"></span></div>
+<form id="exForm" class="exform" autocomplete="off" novalidate>
+<div class="row" style="margin-top:0"><input id="exAmt" type="number" inputmode="numeric" min="1" max="1000000" step="1" placeholder="金額 $" aria-label="金額"><select id="exStop" aria-label="地點"></select></div>
+<div class="chips excats" role="group" aria-label="類別" id="exCats"></div>
+<div class="row"><input id="exNote" type="text" maxlength="60" placeholder="備註（例：午餐、停車費）" aria-label="備註"><button class="pri" type="submit">＋ 記一筆</button></div>
+</form>
+<div id="exSum"></div><ul id="exList" class="exlist"></ul></section>
+
 <details class="pool" id="poolBox"><summary id="poolSum">備選（今天不去）</summary><div class="note" style="margin:0 0 6px">按「＋ 加回行程」會自動插到最順的位置</div><div id="pool"></div></details>
 
 <div class="foot">
 車程為估算（含停車約 10 分）；藍線為道路行車路線（需網路）；若路線服務暫時無法連線，會以虛線顯示站點連線示意。導航請按「導航」。清泉吊橋、三毛夢屋、將軍湯拆成獨立步行點，地圖位置以清泉吊橋附近示意；營業及開放狀態請以現場公告為準。阿胖、故居週一休；蕭如松週二休；三毛夢屋週三休。<br>
-v15｜08:30 出發；阿胖豆漿外帶（車上吃）；午餐在清泉；午餐後直接開車回縣政府（取消抱石與新竹站晚餐）。<br>編輯模式：拖曳 ≡ 或 ↑↓ 排序、±分鐘調停留、設「最早開始」會自動插入等待。改錯可按「↶ 復原」。「📋 複製行程」可貼給 Claude。行程會自動存在這支手機的瀏覽器，關掉重開仍在。<br>📔 旅遊日誌：按「📷 拍照記錄」會記下時間和 GPS 位置，照片顯示在日誌和地圖上。照片只存在這支手機，要保留請按「匯出日誌」或在照片上按「存到手機」。<span class="edit-only"> <button class="resetlink" id="reset">重置成預設行程</button></span>
+v15｜08:30 出發；阿胖豆漿外帶（車上吃）；午餐在清泉；午餐後直接開車回縣政府（取消抱石與新竹站晚餐）。<br>編輯模式：拖曳 ≡ 或 ↑↓ 排序、±分鐘調停留、設「最早開始」會自動插入等待。改錯可按「↶ 復原」。「📋 複製行程」可貼給 Claude。行程會自動存在這支手機的瀏覽器，關掉重開仍在。<br>💰 記帳：金額、類別、地點會存在這支手機；「📋 複製行程」和「匯出日誌」都會附上記帳明細。<br>📔 旅遊日誌：按「📷 拍照記錄」會記下時間和 GPS 位置，照片顯示在日誌和地圖上。照片只存在這支手機，要保留請按「匯出日誌」或在照片上按「存到手機」。<span class="edit-only"> <button class="resetlink" id="reset">重置成預設行程</button></span>
 </div>
 </main>
 <input type="file" id="phIn" accept="image/*" multiple hidden><input type="file" id="camIn" accept="image/*" capture="environment" hidden>
@@ -215,7 +241,7 @@ const I={
  car:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M3 16h18M7 19v-3M17 19v-3"/><circle cx="8" cy="13" r=".8"/><circle cx="16" cy="13" r=".8"/></svg>',
  walk:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2-6 3 3v3M12 15l-1-5 3-2 2 4 3 1M11 10l-3 2v3"/></svg>',
  map:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'};
-const TRIP='2026-11-21',TRIP_DOW=6,VER=21,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
+const TRIP='2026-11-21',TRIP_DOW=6,VER=22,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
 const HOME={name:'新竹縣政府',q:'新竹縣政府 竹北市光明六路10號',lat:24.8269,lng:121.0129,addr:'竹北市光明六路10號'};
 const P={
  apang:{name:'阿胖豆漿',q:'阿胖豆漿 新竹縣竹東鎮東寧路三段56號',lat:24.7375,lng:121.0905,c:'Z',dur:10,type:'must',open:'05:30',close:'11:00',closed:[1],addr:'竹東鎮東寧路三段56號',note:'外帶：粄條韭菜蛋餅，車上吃；吃輕再上山'},
@@ -377,7 +403,7 @@ function cardHTML(id,r,inPool,en,pg,now){
  if(on&&r.wait)h+=`<div class="wt">⏳ 等待 ${r.wait} 分（最早 ${S.fix[id]} 開始）</div>`;
  if(inPool)h+=`<div class="acts"><button data-addback="${id}">＋ 加回行程</button></div>`;
  h+=`<a class="addr" href="${nav(id)}" target="_blank" rel="noopener" aria-label="開車導航到${p.name}">${I.pin} ${addrOf(id)}</a><div class="note">${p.note}${p.open?`｜營業 ${p.open}–${p.close}`:''}</div>`;
- if(on){const ps=PH[id]||[];h+=`<div class="phs"><button data-phadd="${id}" aria-label="加照片到${p.name}">📷 ${ps.length?ps.length+' 張':'加照片'}</button>${ps.map(x=>`<img src="${x.url}" alt="${p.name} 照片" data-ph="${x.id}" loading="lazy">`).join('')}</div>`}
+ if(on){const ps=PH[id]||[];h+=`<div class="phs"><button data-phadd="${id}" aria-label="加照片到${p.name}">📷 ${ps.length?ps.length+' 張':'加照片'}</button>${ps.map(x=>`<img src="${x.url}" alt="${p.name} 照片" data-ph="${x.id}" loading="lazy">`).join('')}${exStopTot(id)?`<span class="exs">💰 ${money(exStopTot(id))}</span>`:''}</div>`}
  if(on)h+=r.w.map(x=>`<div class="w">⚠ ${x}</div>`).join('');
  if(on&&now&&now.on&&r.auto)h+=`<div class="acts view-only"><button data-skip="${id}">其實沒去</button></div>`;
  if(on&&now&&now.on&&!r.actual&&(st!==' past'||(pg&&pg.clock)))h+=`<div class="acts view-only"><button data-arrive="${id}">✓ 到了</button><button data-skip="${id}">略過</button></div>`;
@@ -418,7 +444,7 @@ function render(){
   if(c&&(!el||el.disabled))el=c.querySelector(fk.a==='up'?'[data-a="dn"]':'[data-a="up"]');if(el&&(el.disabled||!el.offsetParent))el=null;if(!el&&c&&c.offsetParent)el=c;
   if(!el){const cs=[...document.querySelectorAll('#list .card')];el=cs[Math.min(Math.max(fk.idx??0,0),cs.length-1)]||$('poolSum')}
   if(el)el.focus({preventScroll:true})}
- drawMap(C);save();if(typeof renderBlog==='function')renderBlog();
+ drawMap(C);save();if(typeof renderBlog==='function')renderBlog();renderExp();
  setTimeout(()=>document.querySelectorAll('.tm.chg').forEach(e=>e.classList.remove('chg')),1200);
 }
 function renderNext(C,now,pg){
@@ -442,7 +468,7 @@ let stale=false;if(!pg.clock&&pg.nx){const r0=compute(S,true,null).res[pg.nx];st
  }
  else if(!pg.cur)h+=`<div class="lbl">今天行程都走完了</div><div class="nn">回新竹縣政府</div><div class="row"><a class="btn pri" href="${nav('home')}" target="_blank" rel="noopener">${I.nav} 開車回家</a></div>`;
  else h+=`<div class="row"><a class="btn pri" href="${nav('home')}" target="_blank" rel="noopener">${I.nav} 之後開車回家</a></div>`;
- if(now.on)h+=`<div class="row"><button data-snap="cam">📷 拍照記錄</button></div>`;
+ if(now.on)h+=`<div class="row"><button data-snap="cam">📷 拍照記錄</button><button data-exq="1">💰 記帳</button></div>`;
  const sh=skipHint(C);
  if(sh&&sh.ok)h+=`<div class="hint">💡 必去行程會趕不上。略過「${short(sh.id)}」可省 ${sh.save} 分${sh.ok?'，必去就趕得上':''}<button data-skip="${sh.id}">略過${short(sh.id)}</button></div>`;
  $('next').innerHTML=h;
@@ -543,6 +569,7 @@ function exportText(){
  C.en.forEach(id=>{const r=C.res[id];L.push(`${r.n}. ${nm(id)} ${toS(r.arr)}–${toS(r.dep)}（停 ${durOf(S,id)} 分）${S.fix[id]?'｜最早 '+S.fix[id]:''}${r.w.length?'｜⚠ '+r.w.join('；'):''}`)});
  L.push(`${toS(C.end)} 回到新竹縣政府`);
  const pool=S.order.filter(id=>!S.on[id]).map(nm);if(pool.length)L.push('備選：'+pool.join('、'));
+ if(EX.items.length){L.push('',`記帳：共 ${money(exTotal())}（${EX.people} 人，每人 ${money(Math.round(exTotal()/EX.people))}）`);for(const x of EX.items)L.push(`  ${hhmm(x.t)} ${CATS[x.cat]} ${x.note||''} ${exPlace(x)} ${money(x.amt)}`)}
  const data={v:VER,start:S.start,order:S.order,on:S.on,dur:S.dur,fix:S.fix,cname:S.cname};
  L.push('','（以下是給 Claude 讀的資料，請勿修改）','HCTRIP '+JSON.stringify(data));
  return L.join('\n');
@@ -630,6 +657,46 @@ function initSortable(){
    lastId=ev.item.dataset.id;edit(`${short(lastId)} 移到第 ${ids.indexOf(lastId)+1} 站`,()=>{S.order=[...ids,...S.order.filter(id=>!S.on[id])]})}});
 }
 try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>render())}catch(e){}
+/* expenses: kept in this browser's localStorage (separate from the plan so reset/undo never touch it) */
+const CATS={food:'🍜 餐飲',car:'⛽ 油錢交通',park:'🅿️ 停車',ticket:'🎫 門票',shop:'🛍 購物',other:'📦 其他'},EK='hc_trip_exp';
+let EX={people:1,items:[]},exCat='food';
+try{const o=JSON.parse(localStorage.getItem(EK));if(o&&Array.isArray(o.items))EX={people:Math.min(50,Math.max(1,Math.round(+o.people)||1)),items:o.items.filter(x=>x&&Number.isFinite(x.amt)&&x.amt>0&&Number.isFinite(x.t)).map(x=>({id:String(x.id||Math.random().toString(36).slice(2)),t:x.t,amt:Math.round(x.amt),cat:CATS[x.cat]?x.cat:'other',note:String(x.note||'').replace(/[<>]/g,'').slice(0,60),stop:x.stop&&Object.prototype.hasOwnProperty.call(P,x.stop)?x.stop:null}))}}catch(e){}
+const money=n=>'$'+Math.round(n).toLocaleString('en-US');
+const exTotal=()=>EX.items.reduce((a,x)=>a+x.amt,0);
+const exStopTot=id=>EX.items.reduce((a,x)=>a+(x.stop===id?x.amt:0),0);
+const exPlace=x=>x.stop?short(x.stop):'途中';
+function exSave(){try{localStorage.setItem(EK,JSON.stringify(EX))}catch(e){toast('記帳沒有存到（瀏覽器儲存失敗）',null)}}
+function exAutoStop(){const now=nowInfo();if(!now.on)return null;const C=compute(S,true,liveFloor(now)),pg=progress(C,now);return pg.cur||null}
+let exKey='';
+function renderExp(){
+ const sel=$('exStop');if(!sel)return;
+ if(document.activeElement!==sel){const en=S.order.filter(id=>S.on[id]),cur=sel.value||'auto',auto=exAutoStop();
+  sel.innerHTML=`<option value="auto">📍 自動（${auto?short(auto):'途中'}）</option>`+en.map(id=>`<option value="${id}">${esc(short(id))}</option>`).join('')+'<option value="">途中</option>';
+  sel.value=[...sel.options].some(o=>o.value===cur)?cur:'auto'}
+ $('exCats').innerHTML=Object.entries(CATS).map(([k,v])=>`<button type="button" data-cat="${k}" aria-pressed="${k===exCat}">${v}</button>`).join('');
+ const tot=exTotal(),key=JSON.stringify(EX)+S.order.join()+JSON.stringify(S.cname);
+ $('exTot').textContent=EX.items.length?money(tot):'';
+ if(key===exKey)return;exKey=key;
+ if(document.activeElement!==$('exPpl')){
+  const by={};for(const x of EX.items)by[x.cat]=(by[x.cat]||0)+x.amt;
+  $('exSum').innerHTML=EX.items.length?`<div class="row" style="margin-top:0"><label>人數 <input id="exPpl" type="number" inputmode="numeric" min="1" max="50" value="${EX.people}"></label><span>每人 <b>${money(Math.round(tot/EX.people))}</b></span></div><div class="exbar">${Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<span>${CATS[k]}</span><i style="width:${Math.max(4,Math.round(v/tot*100))}%"></i><span>${money(v)}</span>`).join('')}</div>`:''}
+ $('exList').innerHTML=EX.items.length?[...EX.items].sort((a,b)=>b.t-a.t).map(x=>`<li><span class="ext">${hhmm(x.t)}</span><span class="exn">${CATS[x.cat]}${x.note?'・'+esc(x.note):''}<small>${esc(exPlace(x))}</small></span><span class="exa">${money(x.amt)}</span><button data-exdel="${x.id}" aria-label="刪除 ${hhmm(x.t)} ${money(x.amt)}">✕</button></li>`).join(''):'<li class="note" style="margin:0;border:0">還沒有記帳。輸入金額、選類別，按「＋ 記一筆」。</li>';
+}
+$('exForm').addEventListener('submit',e=>{
+ e.preventDefault();const a=$('exAmt'),amt=Math.round(Number(a.value));
+ if(!Number.isFinite(amt)||amt<1||amt>1000000){toast('請輸入 1 到 1,000,000 的金額',null);a.focus();return}
+ const v=$('exStop').value,stop=v==='auto'?exAutoStop():v||null,note=$('exNote').value.replace(/[<>]/g,'').trim().slice(0,60);
+ const it={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:Date.now(),amt,cat:exCat,note,stop};
+ EX.items.push(it);exSave();a.value='';$('exNote').value='';render();
+ toast(`已記 ${CATS[it.cat]} ${money(amt)}（${exPlace(it)}）`,{label:'復原',fn:()=>{EX.items=EX.items.filter(x=>x.id!==it.id);exSave();render();toast('已刪除這筆',null)}});
+});
+document.addEventListener('click',e=>{
+ const c=e.target.closest('[data-cat]');if(c){exCat=c.dataset.cat;renderExp();return}
+ const d=e.target.closest('[data-exdel]');if(d){const x=EX.items.find(x=>x.id===d.dataset.exdel);if(x&&confirm(`刪除 ${hhmm(x.t)} ${CATS[x.cat]} ${money(x.amt)}？`)){EX.items=EX.items.filter(y=>y!==x);exSave();render();toast('已刪除這筆',null)}return}
+ if(e.target.closest('[data-exq]')){$('exp').scrollIntoView({block:'start',behavior:'smooth'});setTimeout(()=>$('exAmt').focus({preventScroll:true}),350)}
+});
+document.addEventListener('change',e=>{if(e.target.id==='exPpl'){const n=Math.round(Number(e.target.value));EX.people=Number.isFinite(n)&&n>=1&&n<=50?n:EX.people;e.target.value=EX.people;exSave();exKey='';render()}});
+
 /* photo diary: posts kept in this browser's IndexedDB (th: meta+thumb, full: 1600px image) */
 const PH={};let POSTS=[],phDB=null,phTarget=null,lbId=null,blogKey='';
 const hhmm=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
@@ -713,7 +780,7 @@ async function blogExport(){
   const fu=await idbReq(phDB.transaction('full').objectStore('full').getAll()),F={};for(const x of fu)F[x.id]=x.blob;
   let body='';for(const x of POSTS){const d=F[x.id]?await b2d(F[x.id]):'';
    body+=`<article><p class="m"><b>${hhmm(x.t)}</b>　${esc(placeOf(x))}${x.lat!=null?`　<a href="https://www.google.com/maps/search/?api=1&query=${x.lat.toFixed(6)},${x.lng.toFixed(6)}">📍 地圖</a>`:''}</p>${d?`<img src="${d}" alt="">`:''}${x.text?`<p>${esc(x.text).replace(/\n/g,'<br>')}</p>`:''}</article>`}
-  const html=`<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>11/21 新竹一日遊日誌</title><style>body{font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;max-width:720px;margin:0 auto;padding:16px;background:#f3eee4;color:#22201b;line-height:1.6}article{background:#fffdf8;border:1px solid #e0d9c9;border-radius:12px;padding:12px;margin:12px 0}img{width:100%;border-radius:8px;display:block}.m{color:#5f5c54;margin:0 0 8px}a{color:#2e4a6b}</style></head><body><h1>11/21（六）新竹一日遊</h1>${body}</body></html>`;
+  const html=`<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>11/21 新竹一日遊日誌</title><style>body{font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;max-width:720px;margin:0 auto;padding:16px;background:#f3eee4;color:#22201b;line-height:1.6}article{background:#fffdf8;border:1px solid #e0d9c9;border-radius:12px;padding:12px;margin:12px 0}img{width:100%;border-radius:8px;display:block}.m{color:#5f5c54;margin:0 0 8px}a{color:#2e4a6b}</style></head><body><h1>11/21（六）新竹一日遊</h1>${body}${EX.items.length?`<article><h2>💰 記帳　${money(exTotal())}</h2><p class="m">${EX.people} 人・每人 ${money(Math.round(exTotal()/EX.people))}</p>${EX.items.map(x=>`<p>${hhmm(x.t)}　${CATS[x.cat]}　${esc(x.note||'')}　${esc(exPlace(x))}　<b>${money(x.amt)}</b></p>`).join('')}</article>`:''}</body></html>`;
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));a.download=`${TRIP}_hsinchu-trip-diary.html`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000);
   toast('已匯出日誌',null);
  }catch(e){toast('匯出失敗',null)}
