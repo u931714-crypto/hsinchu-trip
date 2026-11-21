@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>11/21（六）新竹一日遊 v28</title>
+<title>11/21（六）新竹一日遊 v29</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" media="print" onload="this.media='all'">
 <style>
 :root{--bg:#f3eee4;--card:#fffdf8;--ink:#22201b;--sub:#5f5c54;--line:#e0d9c9;--must:#b8532e;--mustTxt:#a8462a;--mustbg:#f6e3d9;--opt:#4a6b55;--optTxt:#3f6049;--optbg:#e2ebe3;--acc:#2e4a6b;--warn:#a32d2d;--warnbg:#fbe9e9;--onc:#fff;--wait:#8a5a0b;--waitbg:#faeeda}
@@ -188,6 +188,11 @@ body.dragging .card .phs{display:none}
 .extab .pos{color:var(--optTxt);font-weight:700}.extab .neg{color:var(--warn);font-weight:700}
 .exset{background:var(--waitbg);color:var(--wait);border-radius:10px;padding:8px 12px;font-weight:700;margin:6px 0}
 .exset div{padding:2px 0}
+.exediting{background:var(--waitbg);color:var(--wait);font-weight:700;border-radius:8px;padding:6px 10px;margin-bottom:8px}
+.exform.editing{border-color:var(--wait);box-shadow:0 0 0 2px var(--wait)}
+.exlist li.cur{background:var(--waitbg)}
+.exlist .exn{cursor:pointer}
+#exFab{position:fixed;left:12px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:940;border-radius:99px;min-height:48px;padding:6px 14px;font-weight:700;box-shadow:0 2px 10px rgba(0,0,0,.3);background:var(--card)}
 .exs{font-size:14px;color:var(--sub);white-space:nowrap}
 #addSheet{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3500;display:flex;align-items:flex-end;justify-content:center}
 #addSheet[hidden]{display:none}
@@ -217,7 +222,7 @@ body.dragging .card .phs{display:none}
 <div class="sum" id="sum" role="region" aria-label="行程摘要"></div><div class="sr" id="srlive" role="status" aria-live="polite"></div>
 <main>
 <div class="hdr">
-<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v28｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
+<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v29｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
 <button id="mode" aria-pressed="false">✏️ 編輯</button>
 </div>
 
@@ -239,16 +244,19 @@ body.dragging .card .phs{display:none}
 <div class="endrow" id="endrow"></div>
 <div class="addrow"><button id="addStop">＋ 臨時加行程</button></div>
 
-<section class="blog" id="blog" aria-label="旅遊日誌"><div class="bloghd"><h2>📔 旅遊日誌</h2><div class="row" style="margin:0"><button class="pri" data-snap="cam">📷 拍照記錄</button><button data-snap="lib">🖼 從相簿加</button></div></div><div id="posts"></div><div class="row" id="blogFoot"></div></section>
-
 <section class="exp" id="exp" aria-label="記帳"><div class="bloghd"><h2>💰 記帳</h2><span id="exTot" class="extot"></span></div>
 <form id="exForm" class="exform" autocomplete="off" novalidate>
+<div id="exEditing" class="exediting" hidden></div>
 <div class="row" style="margin-top:0"><input id="exAmt" type="number" inputmode="numeric" min="1" max="1000000" step="1" placeholder="金額 $" aria-label="金額"><select id="exStop" aria-label="地點"></select></div>
 <div class="chips excats" role="group" aria-label="類別" id="exCats"></div>
 <div id="exWho"></div>
-<div class="row"><input id="exNote" type="text" maxlength="60" placeholder="備註（例：午餐、停車費）" aria-label="備註"><button class="pri" type="submit">＋ 記一筆</button></div>
+<div class="row"><input id="exNote" type="text" maxlength="60" placeholder="備註（例：午餐、停車費）" aria-label="備註"><button class="pri" type="submit" id="exSubmit">＋ 記一筆</button><button type="button" id="exCancel" hidden>取消修改</button></div>
 </form>
 <div id="exSum"></div><ul id="exList" class="exlist"></ul></section>
+
+<section class="blog" id="blog" aria-label="旅遊日誌"><div class="bloghd"><h2>📔 旅遊日誌</h2><div class="row" style="margin:0"><button class="pri" data-snap="cam">📷 拍照記錄</button><button data-snap="lib">🖼 從相簿加</button></div></div><div id="posts"></div><div class="row" id="blogFoot"></div></section>
+
+
 
 <details class="pool" id="poolBox"><summary id="poolSum">備選（今天不去）</summary><div class="note" style="margin:0 0 6px">按「＋ 加回行程」會自動插到最順的位置</div><div id="pool"></div></details>
 
@@ -271,6 +279,7 @@ v15｜08:30 出發；阿胖豆漿外帶（車上吃）；午餐在清泉；午�
 <label class="ck2"><input type="checkbox" id="adMust" checked> 必去</label>
 <div class="row" style="margin-top:14px"><button class="pri" id="adOk">加入行程</button><button id="adCancel">取消</button></div>
 </div></div>
+<button id="exFab" aria-label="跳到記帳">💰</button>
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="undoBtn">復原</button></div>
 
 <script>
@@ -280,7 +289,7 @@ const I={
  car:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M3 16h18M7 19v-3M17 19v-3"/><circle cx="8" cy="13" r=".8"/><circle cx="16" cy="13" r=".8"/></svg>',
  walk:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2-6 3 3v3M12 15l-1-5 3-2 2 4 3 1M11 10l-3 2v3"/></svg>',
  map:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'};
-const TRIP='2026-11-21',TRIP_DOW=6,VER=28,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
+const TRIP='2026-11-21',TRIP_DOW=6,VER=29,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
 const HOME={name:'新竹縣政府',q:'新竹縣政府 竹北市光明六路10號',lat:24.8269,lng:121.0129,addr:'竹北市光明六路10號'};
 const P={
  apang:{name:'阿胖豆漿',q:'阿胖豆漿 新竹縣竹東鎮東寧路三段56號',lat:24.7375,lng:121.0905,c:'Z',dur:10,type:'must',open:'05:30',close:'11:00',closed:[1],addr:'竹東鎮東寧路三段56號',note:'外帶：粄條韭菜蛋餅，車上吃；吃輕再上山'},
@@ -764,7 +773,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('addSheet').hidd
 const CATS={food:'🍜 餐飲',car:'⛽ 油錢交通',park:'🅿️ 停車',ticket:'🎫 門票',shop:'🛍 購物',other:'📦 其他'},EK='hc_trip_exp';
 const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const cleanName=v=>String(v||'').replace(/[<>&"'`]/g,'').trim().slice(0,12);
-let EX={members:[{id:'m1',name:'我'}],items:[]},exCat='food',exPayer=null,exSplitSel=null;
+let EX={members:[{id:'m1',name:'我'}],items:[]},exCat='food',exPayer=null,exSplitSel=null,exEditId=null;
 try{const o=JSON.parse(localStorage.getItem(EK));if(o&&Array.isArray(o.items)){
  let M=Array.isArray(o.members)?o.members.filter(m=>m&&typeof m.id==='string'&&cleanName(m.name)).map(m=>({id:m.id.slice(0,20),name:cleanName(m.name)})):[];
  if(!M.length){M=[{id:'m1',name:'我'}];const n=Math.min(20,Math.max(1,Math.round(+o.people)||1));for(let i=2;i<=n;i++)M.push({id:'m'+i,name:'朋友'+(i-1)})}
@@ -802,11 +811,14 @@ function renderExp(){
  if(document.activeElement!==sel){const en=S.order.filter(id=>S.on[id]),cur=sel.value||'auto',auto=exAutoStop();
   sel.innerHTML=`<option value="auto">📍 自動（${auto?short(auto):'途中'}）</option>`+en.map(id=>`<option value="${id}">${esc(short(id))}</option>`).join('')+'<option value="">途中</option>';
   sel.value=[...sel.options].some(o=>o.value===cur)?cur:'auto'}
+ const tot0=exTotal();$('exFab').textContent=EX.items.length?'💰 '+money(tot0):'💰 記帳';
+ const ed=exEditId&&EX.items.find(x=>x.id===exEditId);if(exEditId&&!ed)exEditId=null;
+ $('exForm').classList.toggle('editing',!!ed);$('exEditing').hidden=!ed;if(ed)$('exEditing').textContent=`✏️ 修改 ${hhmm(ed.t)} 這筆（${CATS[ed.cat]} ${money(ed.amt)}）`;$('exSubmit').textContent=ed?'✓ 儲存修改':'＋ 記一筆';$('exCancel').hidden=!ed;
  $('exCats').innerHTML=Object.entries(CATS).map(([k,v])=>`<button type="button" data-cat="${k}" aria-pressed="${k===exCat}">${v}</button>`).join('');
  const ids=EX.members.map(m=>m.id);if(!ids.includes(exPayer))exPayer=ids[0];if(!exSplitSel)exSplitSel=new Set(ids);for(const id of [...exSplitSel])if(!ids.includes(id))exSplitSel.delete(id);
  $('exWho').innerHTML=multi()?`<div class="row"><span>誰付：</span>${EX.members.map(m=>`<button type="button" class="${m.id===exPayer?'pri':''}" data-payer="${m.id}" aria-pressed="${m.id===exPayer}">${esc(m.name)}</button>`).join('')}</div><div class="row exsplit"><span>分給：</span>${EX.members.map(m=>`<button type="button" data-split="${m.id}" aria-pressed="${exSplitSel.has(m.id)}">${esc(m.name)}</button>`).join('')}</div>`:'';
  const tot=exTotal();$('exTot').textContent=EX.items.length?money(tot):'';
- const key=JSON.stringify(EX)+S.order.join()+JSON.stringify(S.cname);if(key===exKey)return;exKey=key;
+ const key=JSON.stringify(EX)+S.order.join()+JSON.stringify(S.cname)+'|'+exEditId;if(key===exKey)return;exKey=key;
  const by={};for(const x of EX.items)by[x.cat]=(by[x.cat]||0)+x.amt;
  let h=`<div class="exmem"><span>成員：</span>${EX.members.map(m=>`<button data-mem="${m.id}" aria-label="改名或刪除 ${esc(m.name)}">${esc(m.name)}</button>`).join('')}<button data-memadd="1">＋ 加人</button></div>`;
  if(!multi())h+='<div class="note" style="margin:0">要分帳：按「＋ 加人」把同行的人加進來。</div>';
@@ -816,7 +828,7 @@ function renderExp(){
    h+=`<div class="exset">${st.length?st.map(t=>`<div>💸 ${esc(mName(t.from))} → ${esc(mName(t.to))}　${money(t.amt)}</div>`).join(''):'<div>✓ 已經打平，不用轉帳</div>'}</div>`}
   h+=`<div class="exbar">${Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<span>${CATS[k]}</span><i style="width:${Math.max(4,Math.round(v/tot*100))}%"></i><span>${money(v)}</span>`).join('')}</div>`}
  $('exSum').innerHTML=h;
- $('exList').innerHTML=EX.items.length?[...EX.items].sort((a,b)=>b.t-a.t).map(x=>`<li><span class="ext">${hhmm(x.t)}</span><span class="exn">${CATS[x.cat]}${x.note?'・'+esc(x.note):''}<small>${esc(exPlace(x))}${multi()?`・${esc(mName(x.payer))}付・${esc(splitTxt(x))}`:''}</small></span><span class="exa">${money(x.amt)}</span><button data-exdel="${x.id}" aria-label="刪除 ${hhmm(x.t)} ${money(x.amt)}">✕</button></li>`).join(''):'<li class="note" style="margin:0;border:0">還沒有記帳。輸入金額、選類別，按「＋ 記一筆」。</li>';
+ $('exList').innerHTML=EX.items.length?[...EX.items].sort((a,b)=>b.t-a.t).map(x=>`<li${x.id===exEditId?' class="cur"':''}><span class="ext">${hhmm(x.t)}</span><span class="exn" data-exedit="${x.id}">${CATS[x.cat]}${x.note?'・'+esc(x.note):''}<small>${esc(exPlace(x))}${multi()?`・${esc(mName(x.payer))}付・${esc(splitTxt(x))}`:''}</small></span><span class="exa">${money(x.amt)}</span><button data-exedit="${x.id}" aria-label="修改 ${hhmm(x.t)} ${money(x.amt)}">✏️</button><button data-exdel="${x.id}" aria-label="刪除 ${hhmm(x.t)} ${money(x.amt)}">✕</button></li>`).join(''):'<li class="note" style="margin:0;border:0">還沒有記帳。輸入金額、選類別，按「＋ 記一筆」。</li>';
 }
 $('exForm').addEventListener('submit',e=>{
  e.preventDefault();const a=$('exAmt'),amt=Math.round(Number(a.value));
@@ -824,6 +836,9 @@ $('exForm').addEventListener('submit',e=>{
  if(multi()&&!exSplitSel.size){toast('「分給」至少要選一個人',null);return}
  const v=$('exStop').value,stop=v==='auto'?exAutoStop():v||null,note=$('exNote').value.replace(/[<>]/g,'').trim().slice(0,60);
  const sp=multi()&&exSplitSel.size<EX.members.length?EX.members.map(m=>m.id).filter(id=>exSplitSel.has(id)):null;
+ if(exEditId){const x=EX.items.find(y=>y.id===exEditId);if(x){const before={...x,split:x.split&&[...x.split]};
+  Object.assign(x,{amt,cat:exCat,note,stop:v==='auto'?x.stop:v||null,payer:exPayer||EX.members[0].id,split:sp});exEditId=null;exSave();a.value='';$('exNote').value='';exSplitSel=new Set(EX.members.map(m=>m.id));render();
+  toast(`已修改：${CATS[x.cat]} ${money(x.amt)}（${exPlace(x)}${multi()?`・${mName(x.payer)}付`:''}）`,{label:'復原',fn:()=>{const y=EX.items.find(z=>z.id===before.id);if(y)Object.assign(y,before);exSave();render();toast('已復原',null)}});return}exEditId=null}
  const it={id:newId(),t:Date.now(),amt,cat:exCat,note,stop,payer:exPayer||EX.members[0].id,split:sp};
  EX.items.push(it);exSave();a.value='';$('exNote').value='';exSplitSel=new Set(EX.members.map(m=>m.id));render();
  toast(`已記 ${CATS[it.cat]} ${money(amt)}（${exPlace(it)}${multi()?`・${mName(it.payer)}付`:''}）`,{label:'復原',fn:()=>{EX.items=EX.items.filter(x=>x.id!==it.id);exSave();render();toast('已刪除這筆',null)}});
@@ -840,7 +855,12 @@ document.addEventListener('click',e=>{
   if(!confirm(`刪除 ${m.name}？他分攤的部分會改由其他人分。`))return;
   EX.members=EX.members.filter(x=>x!==m);for(const x of EX.items)if(x.split){x.split=x.split.filter(id=>id!==m.id);if(!x.split.length||x.split.length>=EX.members.length)x.split=null}
   exSave();exKey='';render();toast(`已刪除 ${m.name}`,null);return}
- const d=e.target.closest('[data-exdel]');if(d){const x=EX.items.find(x=>x.id===d.dataset.exdel);if(x&&confirm(`刪除 ${hhmm(x.t)} ${CATS[x.cat]} ${money(x.amt)}？`)){EX.items=EX.items.filter(y=>y!==x);exSave();render();toast('已刪除這筆',null)}return}
+ const ee=e.target.closest('[data-exedit]');if(ee){const x=EX.items.find(y=>y.id===ee.dataset.exedit);if(!x)return;exEditId=x.id;exCat=x.cat;exPayer=x.payer;exSplitSel=new Set(x.split||EX.members.map(m=>m.id));
+  $('exAmt').value=x.amt;$('exNote').value=x.note||'';exKey='';renderExp();const sel=$('exStop');sel.value=[...sel.options].some(o=>o.value===(x.stop||''))?(x.stop||''):'auto';
+  $('exForm').scrollIntoView({block:'start',behavior:'smooth'});setTimeout(()=>$('exAmt').focus({preventScroll:true}),350);return}
+ if(e.target.closest('#exCancel')){exEditId=null;$('exAmt').value='';$('exNote').value='';exSplitSel=new Set(EX.members.map(m=>m.id));exKey='';renderExp();return}
+ if(e.target.closest('#exFab')){$('exp').scrollIntoView({block:'start',behavior:'smooth'});setTimeout(()=>$('exAmt').focus({preventScroll:true}),350);return}
+ const d=e.target.closest('[data-exdel]');if(d){const x=EX.items.find(x=>x.id===d.dataset.exdel);if(x&&confirm(`刪除 ${hhmm(x.t)} ${CATS[x.cat]} ${money(x.amt)}？`)){if(exEditId===x.id){exEditId=null;$('exAmt').value='';$('exNote').value=''}EX.items=EX.items.filter(y=>y!==x);exSave();render();toast('已刪除這筆',null)}return}
  if(e.target.closest('[data-exq]')){$('exp').scrollIntoView({block:'start',behavior:'smooth'});setTimeout(()=>$('exAmt').focus({preventScroll:true}),350)}
 });
 
