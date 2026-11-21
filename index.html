@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>11/21（六）新竹一日遊 v29</title>
+<title>11/21（六）新竹一日遊 v30</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" media="print" onload="this.media='all'">
 <style>
 :root{--bg:#f3eee4;--card:#fffdf8;--ink:#22201b;--sub:#5f5c54;--line:#e0d9c9;--must:#b8532e;--mustTxt:#a8462a;--mustbg:#f6e3d9;--opt:#4a6b55;--optTxt:#3f6049;--optbg:#e2ebe3;--acc:#2e4a6b;--warn:#a32d2d;--warnbg:#fbe9e9;--onc:#fff;--wait:#8a5a0b;--waitbg:#faeeda}
@@ -222,7 +222,7 @@ body.dragging .card .phs{display:none}
 <div class="sum" id="sum" role="region" aria-label="行程摘要"></div><div class="sr" id="srlive" role="status" aria-live="polite"></div>
 <main>
 <div class="hdr">
-<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v29｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
+<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v30｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
 <button id="mode" aria-pressed="false">✏️ 編輯</button>
 </div>
 
@@ -289,7 +289,7 @@ const I={
  car:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M3 16h18M7 19v-3M17 19v-3"/><circle cx="8" cy="13" r=".8"/><circle cx="16" cy="13" r=".8"/></svg>',
  walk:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2-6 3 3v3M12 15l-1-5 3-2 2 4 3 1M11 10l-3 2v3"/></svg>',
  map:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'};
-const TRIP='2026-11-21',TRIP_DOW=6,VER=29,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
+const TRIP='2026-11-21',TRIP_DOW=6,VER=30,KEY='hc_trip_v8',CK='hc_trip_custom'; // Keep legacy storage key to preserve existing user plans.
 const HOME={name:'新竹縣政府',q:'新竹縣政府 竹北市光明六路10號',lat:24.8269,lng:121.0129,addr:'竹北市光明六路10號'};
 const P={
  apang:{name:'阿胖豆漿',q:'阿胖豆漿 新竹縣竹東鎮東寧路三段56號',lat:24.7375,lng:121.0905,c:'Z',dur:10,type:'must',open:'05:30',close:'11:00',closed:[1],addr:'竹東鎮東寧路三段56號',note:'外帶：粄條韭菜蛋餅，車上吃；吃輕再上山'},
@@ -331,6 +331,8 @@ function sanitize(s){
  // Preserve existing choices, but fill newly introduced default-on stops during upgrades.
  for(const id in DEF.on)if(s.on[id]==null)s.on[id]=DEF.on[id];
  for(const id in s.on)if(!(Object.prototype.hasOwnProperty.call(P,id)))delete s.on[id];
+ // An older page version (before custom stops existed) drops unknown ids from order/on but keeps s.custom: put them back.
+ for(const id of Object.keys(s.custom))if(!s.order.includes(id)){s.order.push(id);if(s.on[id]==null)s.on[id]=1}
  for(const id in s.dur)if(!(Object.prototype.hasOwnProperty.call(P,id))||!Number.isFinite(s.dur[id])||s.dur[id]<5)delete s.dur[id];
  for(const id in s.act)if(!(Object.prototype.hasOwnProperty.call(P,id))||!Number.isFinite(s.act[id]))delete s.act[id];
  for(const id in s.fix)if(!(Object.prototype.hasOwnProperty.call(P,id))||!okHM(s.fix[id]))delete s.fix[id];
@@ -346,9 +348,14 @@ const toM=s=>{const[a,b]=s.split(':').map(Number);return a*60+b};
 function toS(m){const d=Math.floor(m/1440),r=((m%1440)+1440)%1440;return String(Math.floor(r/60)).padStart(2,'0')+':'+String(r%60).padStart(2,'0')+(d>0?'(+1)':'')}
 const Q=new URLSearchParams(location.search);
 let S;try{S=sanitize(JSON.parse(localStorage.getItem(KEY)))}catch(e){S=clone(DEF)}
+// Custom stops are mirrored in their own key, which older page versions never touch; recover any they overwrote.
+function mergeBackup(st){let n=0;try{const bk=JSON.parse(localStorage.getItem(CK)||'{}');st.custom=st.custom||{};for(const id in bk){if(bk[id]&&!st.custom[id]){const{fix,...c}=bk[id];st.custom[id]=c;if(fix&&!st.fix[id])st.fix[id]=fix;n++}}}catch(e){}return n}
+let recovered=mergeBackup(S);if(recovered)S=sanitize(S);
 let MODE=Q.get('edit')?'edit':'view';
 let storageWarned=false;
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){if(!storageWarned){storageWarned=true;setTimeout(()=>toast('瀏覽器無法保存行程變更；請確認儲存空間或隱私設定。',null),0)}}}
+let staleShown=false;
+function staleWarn(){if(staleShown)return;staleShown=true;setTimeout(()=>toast('這個分頁是舊版，請重新整理',{label:'重新整理',fn:()=>location.reload()}),0)}
+function save(){try{const cur=JSON.parse(localStorage.getItem(KEY));if(cur&&(cur.v||0)>VER){staleWarn();return}}catch(e){}try{const bk={};for(const id in (S.custom||{}))bk[id]={...S.custom[id],fix:S.fix[id]||null};localStorage.setItem(CK,JSON.stringify(bk))}catch(e){}try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){if(!storageWarned){storageWarned=true;setTimeout(()=>toast('瀏覽器無法保存行程變更；請確認儲存空間或隱私設定。',null),0)}}}
 const cl=id=>id==='home'?'home':P[id].c;
 const short=id=>nm(id).replace(/（.*）/,'');
 function leg(a,b){
@@ -968,7 +975,23 @@ async function phDel(id){
 $('lbClose').onclick=lbHide;$('lbDel').onclick=()=>{if(lbId)phDel(lbId)};
 $('lb').addEventListener('click',e=>{if(e.target.id==='lb')lbHide()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&lbId)lbHide()});
+/* keep tabs in sync, never let an old version overwrite newer data, and offer updates */
+window.addEventListener('storage',e=>{
+ try{
+  if(e.key===KEY&&e.newValue){const n=JSON.parse(e.newValue);if((n.v||0)>VER){staleWarn();return}let st=sanitize(n);const k=mergeBackup(st);if(k)st=sanitize(st);S=st;render();if(k)toast(`已找回 ${k} 個臨時加的行程`,null)}
+  else if(e.key===EK&&e.newValue){const o=JSON.parse(e.newValue);if(o&&Array.isArray(o.items)&&Array.isArray(o.members)){EX=o;exKey='';render()}}
+ }catch(_){}
+});
+let updShown=false,updAt=0;
+async function checkUpdate(){
+ if(updShown||Date.now()-updAt<60000)return;updAt=Date.now();
+ try{const t=await (await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'})).text(),m=/VER=(\d+)/.exec(t);
+  if(m&&+m[1]>VER){updShown=true;toast(`有新版本（v${m[1]}），你的資料不會不見`,{label:'更新',fn:()=>location.reload()})}}catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});
+setInterval(checkUpdate,5*60000);
 render();
+if(recovered)setTimeout(()=>toast(`已找回 ${recovered} 個臨時加的行程`,null),300);
 phInit();
 if(nowInfo().on&&document.querySelector('.card.past'))setTimeout(()=>$('next').scrollIntoView({block:'start'}),300);
 
