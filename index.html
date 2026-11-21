@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>11/21（六）新竹一日遊 v27</title>
+<title>11/21（六）新竹一日遊 v28</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" media="print" onload="this.media='all'">
 <style>
 :root{--bg:#f3eee4;--card:#fffdf8;--ink:#22201b;--sub:#5f5c54;--line:#e0d9c9;--must:#b8532e;--mustTxt:#a8462a;--mustbg:#f6e3d9;--opt:#4a6b55;--optTxt:#3f6049;--optbg:#e2ebe3;--acc:#2e4a6b;--warn:#a32d2d;--warnbg:#fbe9e9;--onc:#fff;--wait:#8a5a0b;--waitbg:#faeeda}
@@ -189,6 +189,19 @@ body.dragging .card .phs{display:none}
 .exset{background:var(--waitbg);color:var(--wait);border-radius:10px;padding:8px 12px;font-weight:700;margin:6px 0}
 .exset div{padding:2px 0}
 .exs{font-size:14px;color:var(--sub);white-space:nowrap}
+#addSheet{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3500;display:flex;align-items:flex-end;justify-content:center}
+#addSheet[hidden]{display:none}
+.sheet{background:var(--card);color:var(--ink);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+.sheet h2{font-size:18px}
+.sheet .fl{display:block;margin:12px 0 0;font-size:14px;color:var(--sub)}
+.sheet input:not([type=checkbox]),.sheet select{font:inherit;font-size:16px;min-height:44px;padding:4px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.sheet .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;align-items:center}
+#adName{width:100%;margin-top:6px}#adQ{flex:1;min-width:0}#adDur{width:90px}
+#adRes button{display:flex;width:100%;text-align:left;justify-content:flex-start;margin-top:6px;font-size:14px;line-height:1.4}
+#adPick{margin:8px 0 0;font-weight:700;color:var(--optTxt)}
+.ck2{display:flex;align-items:center;gap:8px;min-height:44px;margin-top:8px;color:var(--ink)}
+.ck2 input{width:22px;height:22px}
+.addrow{margin:10px 0 0 34px}
 #lb{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:4000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
 #lb.show{display:flex}
 #lb img{max-width:100%;max-height:calc(100vh - 150px);object-fit:contain;border-radius:6px}
@@ -204,7 +217,7 @@ body.dragging .card .phs{display:none}
 <div class="sum" id="sum" role="region" aria-label="行程摘要"></div><div class="sr" id="srlive" role="status" aria-live="polite"></div>
 <main>
 <div class="hdr">
-<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v27｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
+<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v28｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
 <button id="mode" aria-pressed="false">✏️ 編輯</button>
 </div>
 
@@ -224,6 +237,7 @@ body.dragging .card .phs{display:none}
 <div class="leg">🏠 新竹縣政府 出發 <span id="st0"></span></div>
 <div id="list"></div>
 <div class="endrow" id="endrow"></div>
+<div class="addrow"><button id="addStop">＋ 臨時加行程</button></div>
 
 <section class="blog" id="blog" aria-label="旅遊日誌"><div class="bloghd"><h2>📔 旅遊日誌</h2><div class="row" style="margin:0"><button class="pri" data-snap="cam">📷 拍照記錄</button><button data-snap="lib">🖼 從相簿加</button></div></div><div id="posts"></div><div class="row" id="blogFoot"></div></section>
 
@@ -245,6 +259,18 @@ v15｜08:30 出發；阿胖豆漿外帶（車上吃）；午餐在清泉；午�
 </main>
 <input type="file" id="phIn" accept="image/*" multiple hidden><input type="file" id="camIn" accept="image/*" capture="environment" hidden>
 <div id="lb" role="dialog" aria-modal="true" aria-label="照片"><img id="lbImg" alt=""><div id="lbCap"></div><div class="lbbar"><a class="btn" id="lbDl" download>⬇️ 存到手機</a><button id="lbDel">🗑 刪除</button><button id="lbClose">✕ 關閉</button></div></div>
+<div id="addSheet" role="dialog" aria-modal="true" aria-labelledby="addTtl" hidden><div class="sheet">
+<h2 id="addTtl">＋ 臨時加行程</h2>
+<label class="fl">名稱<input id="adName" maxlength="30" placeholder="例：賽夏族矮靈祭"></label>
+<div class="fl">地點
+<div class="row"><input id="adQ" placeholder="搜尋地名，或貼 Google 地圖連結／座標" aria-label="搜尋地點"><button type="button" id="adSearch">搜尋</button></div>
+<div class="row"><button type="button" id="adHere">📍 用現在位置</button></div>
+<div id="adRes"></div><div id="adPick"></div></div>
+<div class="fl">開始時間（選填）<div class="row"><select id="adH" aria-label="開始時"><option value="">不指定</option><option value="0">00 時</option><option value="1">01 時</option><option value="2">02 時</option><option value="3">03 時</option><option value="4">04 時</option><option value="5">05 時</option><option value="6">06 時</option><option value="7">07 時</option><option value="8">08 時</option><option value="9">09 時</option><option value="10">10 時</option><option value="11">11 時</option><option value="12">12 時</option><option value="13">13 時</option><option value="14">14 時</option><option value="15">15 時</option><option value="16">16 時</option><option value="17">17 時</option><option value="18">18 時</option><option value="19">19 時</option><option value="20">20 時</option><option value="21">21 時</option><option value="22">22 時</option><option value="23">23 時</option></select><select id="adM" aria-label="開始分"><option value="0">00 分</option><option value="5">05 分</option><option value="10">10 分</option><option value="15">15 分</option><option value="20">20 分</option><option value="25">25 分</option><option value="30">30 分</option><option value="35">35 分</option><option value="40">40 分</option><option value="45">45 分</option><option value="50">50 分</option><option value="55">55 分</option></select></div></div>
+<div class="fl">停留<div class="row"><input id="adDur" type="number" inputmode="numeric" min="5" max="600" value="60" aria-label="停留分鐘"> 分鐘</div></div>
+<label class="ck2"><input type="checkbox" id="adMust" checked> 必去</label>
+<div class="row" style="margin-top:14px"><button class="pri" id="adOk">加入行程</button><button id="adCancel">取消</button></div>
+</div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="undoBtn">復原</button></div>
 
 <script>
@@ -254,7 +280,7 @@ const I={
  car:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M3 16h18M7 19v-3M17 19v-3"/><circle cx="8" cy="13" r=".8"/><circle cx="16" cy="13" r=".8"/></svg>',
  walk:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2-6 3 3v3M12 15l-1-5 3-2 2 4 3 1M11 10l-3 2v3"/></svg>',
  map:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'};
-const TRIP='2026-11-21',TRIP_DOW=6,VER=27,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
+const TRIP='2026-11-21',TRIP_DOW=6,VER=28,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
 const HOME={name:'新竹縣政府',q:'新竹縣政府 竹北市光明六路10號',lat:24.8269,lng:121.0129,addr:'竹北市光明六路10號'};
 const P={
  apang:{name:'阿胖豆漿',q:'阿胖豆漿 新竹縣竹東鎮東寧路三段56號',lat:24.7375,lng:121.0905,c:'Z',dur:10,type:'must',open:'05:30',close:'11:00',closed:[1],addr:'竹東鎮東寧路三段56號',note:'外帶：粄條韭菜蛋餅，車上吃；吃輕再上山'},
@@ -279,6 +305,11 @@ const HM=/^\d\d:\d\d$/;
 const okHM=s=>typeof s==='string'&&HM.test(s)&&+s.slice(0,2)<24&&+s.slice(3)<60;
 function sanitize(s){
  if(!s||typeof s!=='object'||Array.isArray(s)||!Array.isArray(s.order))return clone(DEF);
+ if(!s.custom||typeof s.custom!=='object'||Array.isArray(s.custom))s.custom={};
+ for(const id of Object.keys(s.custom)){const c=s.custom[id];
+  if(!/^x[a-z0-9]{4,24}$/.test(id)||!c||typeof c!=='object'||!Number.isFinite(c.lat)||!Number.isFinite(c.lng)||Math.abs(c.lat)>90||Math.abs(c.lng)>180){delete s.custom[id];continue}
+  const cs=v=>String(v||'').replace(/[<>&"'`]/g,'').trim();c.name=cs(c.name).slice(0,30)||'臨時行程';c.addr=cs(c.addr).slice(0,80);c.dur=Math.min(600,Math.max(5,Math.round(+c.dur)||60));c.type=c.type==='opt'?'opt':'must';
+  P[id]={custom:1,name:c.name,q:c.lat.toFixed(6)+','+c.lng.toFixed(6),lat:c.lat,lng:c.lng,c:'C'+id,dur:c.dur,type:c.type,addr:c.addr||c.lat.toFixed(5)+', '+c.lng.toFixed(5),note:'臨時加入的行程'}}
  s.order=s.order.filter((id,i,a)=>typeof id==='string'&&Object.prototype.hasOwnProperty.call(P,id)&&a.indexOf(id)===i);
  // v9 migration: insert restored V6 Qingquan stops after the bridge before appending other missing defaults.
  for(const id of ['sanmao','jiangjun'])if(!s.order.includes(id)){const anchor=s.order.indexOf(id==='sanmao'?'bridge':'sanmao');s.order.splice(anchor>=0?anchor+1:s.order.length,0,id)}
@@ -313,6 +344,8 @@ const cl=id=>id==='home'?'home':P[id].c;
 const short=id=>nm(id).replace(/（.*）/,'');
 function leg(a,b){
  if(a===b)return{m:0,walk:true};
+ const pa=a==='home'?HOME:P[a],pb=b==='home'?HOME:P[b];
+ if(pa.custom||pb.custom){const k=km(pa,pb);if(k<0.4)return{m:Math.max(1,Math.round(k*1000/70)),walk:true};return{m:Math.round(k*1.35/40*60)+10,walk:false,rev:false}}
  const A=cl(a),B=cl(b);
  if(A===B)return{m:A==='Z'||A==='Q'?10:0,walk:true};
  const m=(CL[A]&&CL[A][B])??(CL[B]&&CL[B][A]);
@@ -424,7 +457,7 @@ function cardHTML(id,r,inPool,en,pg,now){
  if(on&&now&&now.on&&!r.actual&&(st!==' past'||(pg&&pg.clock)))h+=`<div class="acts view-only"><button data-arrive="${id}">✓ 到了</button><button data-skip="${id}">略過</button></div>`;
  if(p.rename)h+=`<input class="rename edit-only" data-a="rename" value="${(S.cname[id]||'').replace(/"/g,'&quot;')}" placeholder="改成哪家店（留空＝新竹站附近）" aria-label="${p.name} 改店名">`;
  h+=`<div class="ctl edit-only"><button data-a="d" data-v="-15" aria-label="${p.name} 停留減 15 分">−15</button><button data-a="d" data-v="-5" aria-label="${p.name} 停留減 5 分">−5</button><span class="dur">${durOf(S,id)} 分</span><button data-a="d" data-v="5" aria-label="${p.name} 停留加 5 分">+5</button><button data-a="d" data-v="15" aria-label="${p.name} 停留加 15 分">+15</button>`;
- if(on)h+=`<span class="sp"></span><button data-a="up" aria-label="${p.name} 往前移"${idx<=0?' disabled':''}>↑</button><button data-a="dn" aria-label="${p.name} 往後移"${idx>=en.length-1?' disabled':''}>↓</button><label>最早開始 <input type="time" data-a="fix" value="${S.fix[id]||''}" aria-label="${p.name} 最早開始時間"></label>${S.fix[id]?`<button data-a="unfix" aria-label="清除${p.name}最早開始">✕</button>`:''}`;
+ if(on)h+=`<span class="sp"></span><button data-a="up" aria-label="${p.name} 往前移"${idx<=0?' disabled':''}>↑</button><button data-a="dn" aria-label="${p.name} 往後移"${idx>=en.length-1?' disabled':''}>↓</button><label>最早開始 <input type="time" data-a="fix" value="${S.fix[id]||''}" aria-label="${p.name} 最早開始時間"></label>${S.fix[id]?`<button data-a="unfix" aria-label="清除${p.name}最早開始">✕</button>`:''}${p.custom?`<button data-a="delc" aria-label="刪除${p.name}">🗑 刪除這個行程</button>`:''}`;
  h+=`</div></article>`;
  return h;
 }
@@ -544,6 +577,7 @@ document.addEventListener('click',e=>{
  else if(a==='up'||a==='dn'){const k=en.indexOf(id),j=a==='up'?k-1:k+1;if(j<0||j>=en.length)return;if(k<=lk||j<=lk){toast('已到過的站不能移動',null);return}
   lastId=id;quiet(()=>{const o=en[j],i1=S.order.indexOf(id),i2=S.order.indexOf(o);[S.order[i1],S.order[i2]]=[S.order[i2],S.order[i1]]})}
  else if(a==='unfix'){edit(`已清除 ${short(id)} 最早開始`,()=>{delete S.fix[id]})}
+ else if(a==='delc'){if(!confirm(`刪除「${short(id)}」？（可按復原）`))return;edit(`已刪除 ${short(id)}`,()=>{delete S.custom[id];S.order=S.order.filter(x=>x!==id);for(const k of ['on','fix','dur','act','auto'])delete S[k][id]})}
 });
 let actEdit=null;
 // Set a recorded stop's arrival time. If it no longer fits between its neighbours, move the stop
@@ -604,7 +638,7 @@ function exportText(){
  L.push(`${toS(C.end)} 回到新竹縣政府`);
  const pool=S.order.filter(id=>!S.on[id]).map(nm);if(pool.length)L.push('備選：'+pool.join('、'));
  if(EX.items.length)L.push('',...exLines());
- const data={v:VER,start:S.start,order:S.order,on:S.on,dur:S.dur,fix:S.fix,cname:S.cname};
+ const data={v:VER,start:S.start,order:S.order,on:S.on,dur:S.dur,fix:S.fix,cname:S.cname,custom:S.custom};
  L.push('','（以下是給 Claude 讀的資料，請勿修改）','HCTRIP '+JSON.stringify(data));
  return L.join('\n');
 }
@@ -691,6 +725,41 @@ function initSortable(){
    lastId=ev.item.dataset.id;edit(`${short(lastId)} 移到第 ${ids.indexOf(lastId)+1} 站`,()=>{S.order=[...ids,...S.order.filter(id=>!S.on[id])]})}});
 }
 try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>render())}catch(e){}
+/* add a custom stop (place search via OpenStreetMap Nominatim, Google Maps link/coords, or current position) */
+let adLoc=null,adHits=[];
+function adOpen(){adLoc=null;adHits=[];for(const k of ['adName','adQ'])$(k).value='';$('adH').value='';$('adM').value='0';$('adDur').value='60';$('adMust').checked=true;$('adRes').innerHTML='';$('adPick').textContent='';$('addSheet').hidden=false;$('adName').focus()}
+function adClose(){$('addSheet').hidden=true}
+function adSet(lat,lng,addr){adLoc={lat,lng,addr:String(addr||'').replace(/[<>&"'`]/g,'').slice(0,80)};$('adRes').innerHTML='';$('adPick').textContent='✓ 地點：'+(adLoc.addr||lat.toFixed(5)+', '+lng.toFixed(5))}
+function parseLL(v){const t=String(v||'');let m=/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/.exec(t)||/!3d(-?\d{1,2}\.\d+)!4d(-?\d{1,3}\.\d+)/.exec(t)||/[?&](?:q|query|destination|ll|center)=(-?\d{1,2}\.\d+)(?:,|%2C)\s*(-?\d{1,3}\.\d+)/i.exec(t)||/^\s*(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)\s*$/.exec(t);
+ if(!m)return null;const lat=+m[1],lng=+m[2];return Math.abs(lat)<=90&&Math.abs(lng)<=180?{lat,lng}:null}
+async function adSearch(){
+ const q=$('adQ').value.trim();if(!q){toast('請輸入地名或貼上連結',null);return}
+ const ll=parseLL(q);if(ll){adSet(ll.lat,ll.lng,$('adName').value.trim()||'指定座標');return}
+ if(/goo\.gl|maps\.app/.test(q)){toast('Google 短網址讀不到。請在 Google 地圖長按地點，複製座標貼上，或直接搜尋地名',null);return}
+ $('adRes').innerHTML='<div class="note" style="margin:6px 0 0">搜尋中…</div>';
+ try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=tw&accept-language=zh-TW&q='+encodeURIComponent(q));if(!r.ok)throw 0;
+  adHits=(await r.json()).filter(x=>x&&isFinite(x.lat)&&isFinite(x.lon)).map(x=>({lat:+x.lat,lng:+x.lon,name:String(x.name||''),addr:String(x.display_name||'').split(',').slice(0,4).join(',')}));
+  $('adRes').innerHTML=adHits.length?adHits.map((h,i)=>`<button type="button" data-adhit="${i}">📍 ${esc(h.addr)}</button>`).join(''):'<div class="note" style="margin:6px 0 0">找不到。換個關鍵字（例：鄉名＋地名），或在 Google 地圖複製座標貼上。</div>';
+ }catch(e){$('adRes').innerHTML='<div class="note" style="margin:6px 0 0">搜尋服務連不上。可以用「📍 用現在位置」或貼上座標。</div>'}
+}
+function adOk(){
+ const name=$('adName').value.replace(/[<>&"'`]/g,'').trim().slice(0,30);if(!name){toast('請輸入名稱',null);$('adName').focus();return}
+ if(!adLoc){toast('請選擇地點',null);return}
+ const dur=Math.min(600,Math.max(5,Math.round(Number($('adDur').value))||60)),hv=$('adH').value,fix=hv===''?null:String(hv).padStart(2,'0')+':'+String($('adM').value).padStart(2,'0');
+ const id='x'+newId();snap();
+ S.custom=S.custom||{};S.custom[id]={name,lat:adLoc.lat,lng:adLoc.lng,addr:adLoc.addr,dur,type:$('adMust').checked?'must':'opt'};if(fix)S.fix[id]=fix;
+ S=sanitize(S);const pa=planAdd(id);
+ if(pa){S.order=pa.o;S.on[id]=1;if(pa.replaced)S.on[pa.replaced]=0}else{S.order.push(id);S.on[id]=0}
+ adClose();lastId=id;render();
+ const C=compute(S,true,liveFloor(nowInfo())),r=C.res[id];
+ toast(r?`已加入「${name}」第 ${r.n} 站，${toS(r.arr)}${r.wait?` 到、等 ${r.wait} 分`:' 到'}${r.w.length?'（⚠ '+r.w[0]+'）':''}`:`「${name}」排不進今天的行程，放在備選區`);
+}
+$('addStop').onclick=adOpen;$('adCancel').onclick=adClose;$('adOk').onclick=adOk;$('adSearch').onclick=adSearch;
+$('adQ').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();adSearch()}});
+$('adHere').onclick=async()=>{$('adPick').textContent='取得位置中…';const p=await getPos();if(p)adSet(p.lat,p.lng,'目前位置（±'+p.acc+'m）');else $('adPick').textContent='無法取得位置（請允許定位）'};
+$('addSheet').addEventListener('click',e=>{const b=e.target.closest('[data-adhit]');if(b){const h=adHits[+b.dataset.adhit];if(h){adSet(h.lat,h.lng,h.addr);if(!$('adName').value.trim()&&h.name)$('adName').value=h.name.slice(0,30)}return}if(e.target.id==='addSheet')adClose()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('addSheet').hidden)adClose()});
+
 /* expenses + split bill: kept in this browser's localStorage (separate from the plan so reset/undo never touch it) */
 const CATS={food:'🍜 餐飲',car:'⛽ 油錢交通',park:'🅿️ 停車',ticket:'🎫 門票',shop:'🛍 購物',other:'📦 其他'},EK='hc_trip_exp';
 const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
