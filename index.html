@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>11/21（六）新竹一日遊 v26</title>
+<title>11/21（六）新竹一日遊 v27</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" media="print" onload="this.media='all'">
 <style>
 :root{--bg:#f3eee4;--card:#fffdf8;--ink:#22201b;--sub:#5f5c54;--line:#e0d9c9;--must:#b8532e;--mustTxt:#a8462a;--mustbg:#f6e3d9;--opt:#4a6b55;--optTxt:#3f6049;--optbg:#e2ebe3;--acc:#2e4a6b;--warn:#a32d2d;--warnbg:#fbe9e9;--onc:#fff;--wait:#8a5a0b;--waitbg:#faeeda}
@@ -204,7 +204,7 @@ body.dragging .card .phs{display:none}
 <div class="sum" id="sum" role="region" aria-label="行程摘要"></div><div class="sr" id="srlive" role="status" aria-live="polite"></div>
 <main>
 <div class="hdr">
-<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v26｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
+<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v27｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
 <button id="mode" aria-pressed="false">✏️ 編輯</button>
 </div>
 
@@ -254,7 +254,7 @@ const I={
  car:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M3 16h18M7 19v-3M17 19v-3"/><circle cx="8" cy="13" r=".8"/><circle cx="16" cy="13" r=".8"/></svg>',
  walk:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2-6 3 3v3M12 15l-1-5 3-2 2 4 3 1M11 10l-3 2v3"/></svg>',
  map:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'};
-const TRIP='2026-11-21',TRIP_DOW=6,VER=26,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
+const TRIP='2026-11-21',TRIP_DOW=6,VER=27,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
 const HOME={name:'新竹縣政府',q:'新竹縣政府 竹北市光明六路10號',lat:24.8269,lng:121.0129,addr:'竹北市光明六路10號'};
 const P={
  apang:{name:'阿胖豆漿',q:'阿胖豆漿 新竹縣竹東鎮東寧路三段56號',lat:24.7375,lng:121.0905,c:'Z',dur:10,type:'must',open:'05:30',close:'11:00',closed:[1],addr:'竹東鎮東寧路三段56號',note:'外帶：粄條韭菜蛋餅，車上吃；吃輕再上山'},
@@ -416,7 +416,7 @@ function cardHTML(id,r,inPool,en,pg,now){
  if(on&&r.wait)h+=`<div class="wt">⏳ 等待 ${r.wait} 分（最早 ${S.fix[id]} 開始）</div>`;
  if(inPool)h+=`<div class="acts"><button data-addback="${id}">＋ 加回行程</button></div>`;
  h+=`<a class="addr" href="${nav(id)}" target="_blank" rel="noopener" aria-label="開車導航到${p.name}">${I.pin} ${addrOf(id)}</a><div class="note">${p.note}${p.open?`｜營業 ${p.open}–${p.close}`:''}</div>`;
- if(on){const ps=PH[id]||[];h+=`<div class="phs"><button data-phadd="${id}" aria-label="加照片到${p.name}">📷 ${ps.length?ps.length+' 張':'加照片'}</button>${ps.map(x=>`<img src="${x.url}" alt="${p.name} 照片" data-ph="${x.id}" loading="lazy">`).join('')}${exStopTot(id)?`<span class="exs">💰 ${money(exStopTot(id))}</span>`:''}</div>`}
+ if(on){const ps=PH[id]||[];h+=`<div class="phs"><button data-phcam="${id}" aria-label="拍照到${p.name}">📷 拍照</button><button data-phadd="${id}" aria-label="從相簿加照片到${p.name}">🖼 相簿${ps.length?'（'+ps.length+'）':''}</button>${ps.map(x=>`<img src="${x.url}" alt="${p.name} 照片" data-ph="${x.id}" loading="lazy">`).join('')}${exStopTot(id)?`<span class="exs">💰 ${money(exStopTot(id))}</span>`:''}</div>`}
  if(on)h+=r.w.map(x=>`<div class="w">⚠ ${x}</div>`).join('');
  if(on&&r.actual&&Number.isFinite(S.act[id])){if(actEdit===id){const hm=toS(S.act[id]).slice(0,5),hh=+hm.slice(0,2),mi=+hm.slice(3);
   h+=`<div class="acts actedit"><span>實際到達</span><select data-acth="${id}" aria-label="時">${Array.from({length:24},(_,i)=>`<option value="${i}"${i===hh?' selected':''}>${String(i).padStart(2,'0')} 時</option>`).join('')}</select><select data-actm="${id}" aria-label="分">${Array.from({length:60},(_,i)=>`<option value="${i}"${i===mi?' selected':''}>${String(i).padStart(2,'0')} 分</option>`).join('')}</select><button class="pri" data-actsave="${id}">儲存</button><button data-actcancel="1">取消</button></div>`}
@@ -518,7 +518,8 @@ document.addEventListener('click',e=>{
 },true);
 document.addEventListener('click',e=>{
  const pa=e.target.closest('[data-phadd]');if(pa){phTarget=pa.dataset.phadd;$('phIn').value='';$('phIn').click();return}
- const sn=e.target.closest('[data-snap]');if(sn){if(sn.dataset.snap==='cam'){$('camIn').value='';$('camIn').click()}else{phTarget=null;$('phIn').value='';$('phIn').click()}return}
+ const pc=e.target.closest('[data-phcam]');if(pc){phTarget=pc.dataset.phcam;$('camIn').value='';$('camIn').click();return}
+ const sn=e.target.closest('[data-snap]');if(sn){if(sn.dataset.snap==='cam'){phTarget=null;$('camIn').value='';$('camIn').click()}else{phTarget=null;$('phIn').value='';$('phIn').click()}return}
  const pm=e.target.closest('[data-pmap]');if(pm){const x=POSTS.find(x=>x.id===pm.dataset.pmap);if(x&&map){window.scrollTo({top:0,behavior:'smooth'});map.flyTo([x.lat,x.lng],16)}return}
  const pd=e.target.closest('[data-pdel]');if(pd){phDel(pd.dataset.pdel);return}
  if(e.target.closest('#blogExp')){blogExport();return}
@@ -571,7 +572,7 @@ function addBack(id){const pa=planAdd(id);
 document.addEventListener('change',e=>{
  const el=e.target;
  if(el.id==='phIn'){if(el.files&&el.files.length)phAdd(phTarget,[...el.files],false);return}
- if(el.id==='camIn'){if(el.files&&el.files.length)phAdd(null,[...el.files],true);return}
+ if(el.id==='camIn'){if(el.files&&el.files.length)phAdd(phTarget,[...el.files],true);return}
  if(el.id==='actStart'){if(okHM(el.value)){const m=toM(el.value);if(m!==S.dep)setDep(m,`實際出發改為 ${el.value}`)}else if(!el.value&&Number.isFinite(S.dep))setDep(null,'已清除實際出發');return}
  if(el.id==='start'){if(okHM(el.value)){S.start=el.value;save();clearTimeout(pendT);pendT=setTimeout(flush,1500)}return}
  if(el.dataset.a==='tog'){const id=el.closest('.card').dataset.id;
