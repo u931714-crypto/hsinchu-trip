@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>11/21（六）新竹一日遊 v16</title>
+<title>11/21（六）新竹一日遊 v17</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" media="print" onload="this.media='all'">
 <style>
 :root{--bg:#f3eee4;--card:#fffdf8;--ink:#22201b;--sub:#5f5c54;--line:#e0d9c9;--must:#b8532e;--mustTxt:#a8462a;--mustbg:#f6e3d9;--opt:#4a6b55;--optTxt:#3f6049;--optbg:#e2ebe3;--acc:#2e4a6b;--warn:#a32d2d;--warnbg:#fbe9e9;--onc:#fff;--wait:#8a5a0b;--waitbg:#faeeda}
@@ -149,7 +149,7 @@ html{scroll-padding-bottom:76px;scroll-padding-top:60px}
 <div class="sum" id="sum" role="region" aria-label="行程摘要"></div><div class="sr" id="srlive" role="status" aria-live="polite"></div>
 <main>
 <div class="hdr">
-<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v16｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
+<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v17｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
 <button id="mode" aria-pressed="false">✏️ 編輯</button>
 </div>
 
@@ -161,6 +161,7 @@ html{scroll-padding-bottom:76px;scroll-padding-top:60px}
 
 <div class="bar edit-only">
 <label>出發 <input type="time" id="start" step="300"></label>
+<label>實際出發 <input type="time" id="actStart"></label>
 <button id="undoBar" disabled>↶ 復原</button><button id="clearAct">清除實到</button>
 <button id="copyPlan">📋 複製行程</button><button id="ghPlan">💾 存到 GitHub</button>
 </div>
@@ -185,7 +186,7 @@ const I={
  car:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M3 16h18M7 19v-3M17 19v-3"/><circle cx="8" cy="13" r=".8"/><circle cx="16" cy="13" r=".8"/></svg>',
  walk:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2-6 3 3v3M12 15l-1-5 3-2 2 4 3 1M11 10l-3 2v3"/></svg>',
  map:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'};
-const TRIP='2026-11-21',TRIP_DOW=6,VER=16,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
+const TRIP='2026-11-21',TRIP_DOW=6,VER=17,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
 const HOME={name:'新竹縣政府',q:'新竹縣政府 竹北市光明六路10號',lat:24.8269,lng:121.0129,addr:'竹北市光明六路10號'};
 const P={
  apang:{name:'阿胖豆漿',q:'阿胖豆漿 新竹縣竹東鎮東寧路三段56號',lat:24.7375,lng:121.0905,c:'Z',dur:10,type:'must',open:'05:30',close:'11:00',closed:[1],addr:'竹東鎮東寧路三段56號',note:'外帶：粄條韭菜蛋餅，車上吃；吃輕再上山'},
@@ -226,7 +227,8 @@ function sanitize(s){
  for(const id in s.act)if(!(Object.prototype.hasOwnProperty.call(P,id))||!Number.isFinite(s.act[id]))delete s.act[id];
  for(const id in s.fix)if(!(Object.prototype.hasOwnProperty.call(P,id))||!okHM(s.fix[id]))delete s.fix[id];
  for(const id in s.auto)if(s.act[id]==null)delete s.auto[id];
- if(!Number.isFinite(s.base)||!Object.keys(s.act).length)s.base=null;
+ if(!Number.isFinite(s.dep))delete s.dep;
+ if(!Number.isFinite(s.base)||(!Object.keys(s.act).length&&!Number.isFinite(s.dep)))s.base=null;
  if(!okHM(s.start))s.start=DEF.start;
  if((s.v||0)<12){s.on.zhudong=0;s.on.rest=1;const ri=s.order.indexOf('rest');if(ri>=0)s.order.splice(ri,1);const ix=s.order.indexOf('lunch');if(ix>=0)s.order.splice(ix+1,0,'rest');}
  if((s.v||0)<13){s.start='08:30';s.on.rest=0;delete s.dur.apang}
@@ -252,7 +254,7 @@ const nm=id=>S.cname&&S.cname[id]||P[id].name;
 const addrOf=id=>S.cname&&S.cname[id]?'新竹市（'+S.cname[id]+'）':P[id].addr;
 const durOf=(st,id)=>st.dur[id]!=null?st.dur[id]:P[id].dur;
 function compute(st,useAct=true,floor=null){
- let t=toM(st.start),prev='home',drive=0,n=0,pen=0;const res={},W=[];
+ let t=useAct&&Number.isFinite(st.dep)?st.dep:toM(st.start),prev='home',drive=0,n=0,pen=0;const res={},W=[];
  const en=st.order.filter(id=>st.on[id]);
  const li=useAct?en.reduce((k,id,i)=>st.act[id]!=null?i:k,-1):-1;
  en.forEach((id,idx)=>{
@@ -361,7 +363,7 @@ function render(){
  document.body.className=MODE;
  $('mode').textContent=MODE==='edit'?'✓ 完成':'✏️ 編輯';$('mode').setAttribute('aria-pressed',MODE==='edit');
  $('meta').textContent=MODE==='edit'?'編輯中：可勾選、排序、調時間':'今天的行程，照順序走';
- if(document.activeElement!==$('start'))$('start').value=S.start;$('st0').textContent=S.start;
+ if(document.activeElement!==$('start'))$('start').value=S.start;$('st0').innerHTML=Number.isFinite(S.dep)?`${S.start} → <b>實際 ${toS(S.dep)} ✓</b>`:S.start;if(document.activeElement!==$('actStart'))$('actStart').value=Number.isFinite(S.dep)?toS(S.dep).slice(0,5):'';
  $('undoBar').disabled=!hist.length;$('undoBar').textContent='↶ 復原'+(hist.length?`（${hist.length}）`:'');
  const en=pg.en;
  $('list').innerHTML=en.map(id=>cardHTML(id,C.res[id],false,en,now.on?pg:null,now)).join('');
@@ -395,7 +397,8 @@ function renderNext(C,now,pg){
  if(!now.on){const f=en[0],r=C.res[f];
   $('next').innerHTML=`<a class="kick" href="${nav(f)}" target="_blank" rel="noopener"><span><b>11/21（六）${S.start} 出發</b><br>第一站 ${short(f)} ${toS(r.arr)} 到</span><span>${I.nav} 開車導航 ›</span></a>`;$('next').className='next kickwrap';return}
  $('next').className='next';
- if(pg.clock&&!pg.cur&&now.m<toM(S.start)){h+=`<div class="lbl">${S.start} 從縣政府出發（還有 ${toM(S.start)-now.m} 分）</div>`}
+ if(pg.clock&&!pg.cur&&!Number.isFinite(S.dep)&&now.m<toM(S.start)){h+=`<div class="lbl">${S.start} 從縣政府出發（還有 ${toM(S.start)-now.m} 分）</div>`}
+ const homeBtn=pg.li<0&&!anyAct()&&!Number.isFinite(S.dep)?`<button data-depart="1">🏠 從縣政府出發了</button>`:'',homeInfo=Number.isFinite(S.dep)&&!anyAct()?`<div class="info">${toS(S.dep)} 已從縣政府出發（原定 ${S.start}）</div>`:'';
  if(pg.clock){
   if(pg.cur)h+=`<div class="lbl">照原定，現在（${toS(now.m)}）應在</div><div class="nn">${C.res[pg.cur].n}. ${short(pg.cur)}</div><div class="info">到 ${toS(C.res[pg.cur].dep)} 離開</div><div class="row2"><button data-arrive="${pg.cur}">✓ 我在${short(pg.cur)}</button></div>`;
  }else if(pg.cur)h+=`<div class="lbl">現在（${toS(now.m)}）在</div><div class="nn">${short(pg.cur)}</div><div class="info">預計 ${toS(C.res[pg.cur].dep)} 離開</div>`;
@@ -405,7 +408,7 @@ let stale=false;if(!pg.clock&&pg.nx){const r0=compute(S,true,null).res[pg.nx];st
  else if(pg.nx){const r=C.res[pg.nx],ref=S.baseArr&&Number.isFinite(S.baseArr[pg.nx])?S.baseArr[pg.nx]:plan.res[pg.nx].arr,dl=r.arr-ref,lateTxt=dl>120?'已超過預定時間':'比原定晚 '+dl+' 分';
   h+=`<div class="lbl"${pg.cur?' style="margin-top:10px"':''}>${pg.cur?'接下來':'下一站'}</div><div class="nn">${r.n}. ${nm(pg.nx)}</div><div class="info">預計 ${toS(r.arr)} 到${dl>0&&!pg.clock?`<span class="late">（${lateTxt}）</span>`:''}｜${addrOf(pg.nx)}</div>`;
   const fromId=pg.li>=0?en[pg.li]:'home',gone=S.go&&S.go.from===fromId;
-  h+=`<div class="row"><a class="btn pri" href="${nav(pg.nx)}" target="_blank" rel="noopener">${I.nav} 開車導航</a>${!pg.clock&&!gone?`<button data-go-now="${fromId}">${I.car} 出發了</button>`:''}</div>${gone?`<div class="info">${toS(S.go.at)} 已出發</div>`:''}<div class="row2"><button data-arrive="${pg.nx}">✓ 到${short(pg.nx)}了</button><button data-skip="${pg.nx}">略過此站</button></div>`;
+  h+=`<div class="row"><a class="btn pri" href="${nav(pg.nx)}" target="_blank" rel="noopener">${I.nav} 開車導航</a>${!pg.clock&&!gone?`<button data-go-now="${fromId}">${I.car} 出發了</button>`:''}${homeBtn}</div>${gone?`<div class="info">${toS(S.go.at)} 已出發</div>`:''}${homeInfo}<div class="row2"><button data-arrive="${pg.nx}">✓ 到${short(pg.nx)}了</button><button data-skip="${pg.nx}">略過此站</button></div>`;
  }
  else if(!pg.cur)h+=`<div class="lbl">今天行程都走完了</div><div class="nn">回新竹縣政府</div><div class="row"><a class="btn pri" href="${nav('home')}" target="_blank" rel="noopener">${I.nav} 開車回家</a></div>`;
  else h+=`<div class="row"><a class="btn pri" href="${nav('home')}" target="_blank" rel="noopener">${I.nav} 之後開車回家</a></div>`;
@@ -444,6 +447,7 @@ document.addEventListener('click',e=>{
  if(e.target.closest('#toMap')){window.scrollTo({top:0,behavior:'smooth'});return}
  const ar=e.target.closest('[data-arrive]');if(ar){const id=ar.dataset.arrive,m=nowInfo().m;if(!confirm(`確定已到「${short(id)}」？（記為 ${toS(m)}）`))return;
   const C0=compute(S,true,liveFloor(nowInfo())),prevA=Math.max(-1,...C0.en.slice(0,C0.en.indexOf(id)).map(x=>S.act[x]).filter(Number.isFinite));if(m<prevA){toast('時間早於前一站的到達紀錄，未記錄',null);return}edit(`已記錄 ${short(id)} 實到 ${toS(m)}`,()=>{S.go=null;if(!Number.isFinite(S.base)){const pl=compute(S,false);S.base=pl.end;S.baseArr={};for(const x of pl.en)S.baseArr[x]=pl.res[x].arr}const C1=compute(S,true,null);for(const x of C1.en){if(x===id)break;if(S.act[x]==null){S.act[x]=Math.min(C1.res[x].arr,m);S.auto[x]=1}}S.act[id]=m;delete S.auto[id]});const b=document.querySelector('#next [data-arrive],#next .pri');if(b)b.focus();return}
+ if(e.target.closest('[data-depart]')){const m=nowInfo().m;if(!confirm(`記錄 ${toS(m)} 從縣政府出發？`))return;setDep(m,`已記錄 ${toS(m)} 出發，後面時間已重算`);return}
  const ab=e.target.closest('[data-addback]');if(ab){addBack(ab.dataset.addback);return}
  const gn=e.target.closest('[data-go-now]');if(gn){const m=nowInfo().m;edit('已記錄 '+toS(m)+' 出發',()=>{S.go={from:gn.dataset.goNow,at:m}});return}
  const sk=e.target.closest('[data-skip]');if(sk){const id=sk.dataset.skip,nw=nowInfo();edit(`已略過 ${short(id)}（反悔可按加回，或到底部「已略過」區）`,()=>{if(nw.on){if(!Number.isFinite(S.base)){const pl=compute(S,false);S.base=pl.end;S.baseArr={};for(const x of pl.en)S.baseArr[x]=pl.res[x].arr}if(!anyAct()){const en0=S.order.filter(x=>S.on[x]),k=en0.indexOf(id);S.anchor={at:nw.m,after:k>0?en0[k-1]:'home'}}}S.on[id]=0;delete S.act[id];delete S.auto[id]},'加回');const b=document.querySelector('#next [data-arrive],#next .pri');if(b)b.focus();return}
@@ -468,6 +472,7 @@ function addBack(id){const pa=planAdd(id);
  return true}
 document.addEventListener('change',e=>{
  const el=e.target;
+ if(el.id==='actStart'){if(okHM(el.value)){const m=toM(el.value);if(m!==S.dep)setDep(m,`實際出發改為 ${el.value}`)}else if(!el.value&&Number.isFinite(S.dep))setDep(null,'已清除實際出發');return}
  if(el.id==='start'){if(okHM(el.value)){S.start=el.value;save();clearTimeout(pendT);pendT=setTimeout(flush,1500)}return}
  if(el.dataset.a==='tog'){const id=el.closest('.card').dataset.id;
   if(el.checked){if(!addBack(id))el.checked=false}
@@ -519,7 +524,9 @@ $('ghPlan').onclick=ghPlan;
 $('mode').onclick=()=>{MODE=MODE==='edit'?'view':'edit';render()};
 $('undoBar').onclick=undo;
 $('reset').onclick=()=>{if(!confirm('重置成預設行程？（之後仍可按「復原」）'))return;edit('已重置',()=>{S=clone(DEF)})};
-$('clearAct').onclick=()=>{if(!Object.keys(S.act).length){toast('沒有實到紀錄',null);return}edit('已清除實到紀錄',()=>{S.act={};S.auto={};S.go=null;S.base=null;S.baseArr=null;S.anchor=null})};
+$('clearAct').onclick=()=>{if(!Object.keys(S.act).length&&!Number.isFinite(S.dep)){toast('沒有實到紀錄',null);return}edit('已清除實到紀錄',()=>{S.act={};S.auto={};S.go=null;S.base=null;S.baseArr=null;S.anchor=null;delete S.dep})};
+function setBase(){if(!Number.isFinite(S.base)){const pl=compute(S,false);S.base=pl.end;S.baseArr={};for(const x of pl.en)S.baseArr[x]=pl.res[x].arr}}
+function setDep(m,msg){edit(msg,()=>{if(m==null){delete S.dep;if(!Object.keys(S.act).length){S.base=null;S.baseArr=null}}else{setBase();S.dep=m}})}
 
 /* map */
 let map,layer,bounds,markers={},sortable,failT,routeSeq=0,routeLine=null,routeInfo=null,activeRouteKey='',routeCache=new Map(),routePending=new Map();
