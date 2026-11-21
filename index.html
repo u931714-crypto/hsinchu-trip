@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>11/21（六）新竹一日遊 v19</title>
+<title>11/21（六）新竹一日遊 v20</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" media="print" onload="this.media='all'">
 <style>
 :root{--bg:#f3eee4;--card:#fffdf8;--ink:#22201b;--sub:#5f5c54;--line:#e0d9c9;--must:#b8532e;--mustTxt:#a8462a;--mustbg:#f6e3d9;--opt:#4a6b55;--optTxt:#3f6049;--optbg:#e2ebe3;--acc:#2e4a6b;--warn:#a32d2d;--warnbg:#fbe9e9;--onc:#fff;--wait:#8a5a0b;--waitbg:#faeeda}
@@ -140,6 +140,19 @@ html{scroll-padding-bottom:76px;scroll-padding-top:60px}
 .edit #list .card .addr,.edit #list .card .note{display:none}
 .ico{width:16px;height:16px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .rename{font:inherit;font-size:16px;min-height:44px;padding:4px 8px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);width:100%;margin:6px 0 0 32px;max-width:calc(100% - 32px)}
+.phs{display:flex;gap:6px;align-items:center;overflow-x:auto;margin:8px 0 0 32px;scrollbar-width:none}
+.phs button{flex:none}
+.phs img{width:64px;height:64px;object-fit:cover;border-radius:8px;flex:none;border:1px solid var(--line);cursor:pointer}
+body.dragging .card .phs{display:none}
+.pin .phc{font-style:normal;font-size:11px;margin-left:2px}
+.pph{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;max-width:220px}
+.pph img{width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:4000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+#lb.show{display:flex}
+#lb img{max-width:100%;max-height:calc(100vh - 150px);object-fit:contain;border-radius:6px}
+#lbCap{color:#ddd;font-size:14px;margin-top:8px}
+#lb .lbbar{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center}
+#lb .lbbar button,#lb .lbbar a{background:#222;color:#fff;border-color:#555}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -149,7 +162,7 @@ html{scroll-padding-bottom:76px;scroll-padding-top:60px}
 <div class="sum" id="sum" role="region" aria-label="行程摘要"></div><div class="sr" id="srlive" role="status" aria-live="polite"></div>
 <main>
 <div class="hdr">
-<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v19｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
+<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v20｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
 <button id="mode" aria-pressed="false">✏️ 編輯</button>
 </div>
 
@@ -174,9 +187,11 @@ html{scroll-padding-bottom:76px;scroll-padding-top:60px}
 
 <div class="foot">
 車程為估算（含停車約 10 分）；藍線為道路行車路線（需網路）；若路線服務暫時無法連線，會以虛線顯示站點連線示意。導航請按「導航」。清泉吊橋、三毛夢屋、將軍湯拆成獨立步行點，地圖位置以清泉吊橋附近示意；營業及開放狀態請以現場公告為準。阿胖、故居週一休；蕭如松週二休；三毛夢屋週三休。<br>
-v15｜08:30 出發；阿胖豆漿外帶（車上吃）；午餐在清泉；午餐後直接開車回縣政府（取消抱石與新竹站晚餐）。<br>編輯模式：拖曳 ≡ 或 ↑↓ 排序、±分鐘調停留、設「最早開始」會自動插入等待。改錯可按「↶ 復原」。「📋 複製行程」可貼給 Claude。行程會自動存在這支手機的瀏覽器，關掉重開仍在。<span class="edit-only"> <button class="resetlink" id="reset">重置成預設行程</button></span>
+v15｜08:30 出發；阿胖豆漿外帶（車上吃）；午餐在清泉；午餐後直接開車回縣政府（取消抱石與新竹站晚餐）。<br>編輯模式：拖曳 ≡ 或 ↑↓ 排序、±分鐘調停留、設「最早開始」會自動插入等待。改錯可按「↶ 復原」。「📋 複製行程」可貼給 Claude。行程會自動存在這支手機的瀏覽器，關掉重開仍在。<br>📷 每站可加照片，顯示在卡片和地圖上；照片只存在這支手機，要保留請在照片上按「存到手機」。<span class="edit-only"> <button class="resetlink" id="reset">重置成預設行程</button></span>
 </div>
 </main>
+<input type="file" id="phIn" accept="image/*" multiple hidden>
+<div id="lb" role="dialog" aria-modal="true" aria-label="照片"><img id="lbImg" alt=""><div id="lbCap"></div><div class="lbbar"><a class="btn" id="lbDl" download>⬇️ 存到手機</a><button id="lbDel">🗑 刪除</button><button id="lbClose">✕ 關閉</button></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="undoBtn">復原</button></div>
 
 <script>
@@ -186,7 +201,7 @@ const I={
  car:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M3 16h18M7 19v-3M17 19v-3"/><circle cx="8" cy="13" r=".8"/><circle cx="16" cy="13" r=".8"/></svg>',
  walk:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2-6 3 3v3M12 15l-1-5 3-2 2 4 3 1M11 10l-3 2v3"/></svg>',
  map:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'};
-const TRIP='2026-11-21',TRIP_DOW=6,VER=19,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
+const TRIP='2026-11-21',TRIP_DOW=6,VER=20,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
 const HOME={name:'新竹縣政府',q:'新竹縣政府 竹北市光明六路10號',lat:24.8269,lng:121.0129,addr:'竹北市光明六路10號'};
 const P={
  apang:{name:'阿胖豆漿',q:'阿胖豆漿 新竹縣竹東鎮東寧路三段56號',lat:24.7375,lng:121.0905,c:'Z',dur:10,type:'must',open:'05:30',close:'11:00',closed:[1],addr:'竹東鎮東寧路三段56號',note:'外帶：粄條韭菜蛋餅，車上吃；吃輕再上山'},
@@ -348,6 +363,7 @@ function cardHTML(id,r,inPool,en,pg,now){
  if(on&&r.wait)h+=`<div class="wt">⏳ 等待 ${r.wait} 分（最早 ${S.fix[id]} 開始）</div>`;
  if(inPool)h+=`<div class="acts"><button data-addback="${id}">＋ 加回行程</button></div>`;
  h+=`<a class="addr" href="${nav(id)}" target="_blank" rel="noopener" aria-label="開車導航到${p.name}">${I.pin} ${addrOf(id)}</a><div class="note">${p.note}${p.open?`｜營業 ${p.open}–${p.close}`:''}</div>`;
+ if(on){const ps=PH[id]||[];h+=`<div class="phs"><button data-phadd="${id}" aria-label="加照片到${p.name}">📷 ${ps.length?ps.length+' 張':'加照片'}</button>${ps.map(x=>`<img src="${x.url}" alt="${p.name} 照片" data-ph="${x.id}" loading="lazy">`).join('')}</div>`}
  if(on)h+=r.w.map(x=>`<div class="w">⚠ ${x}</div>`).join('');
  if(on&&now&&now.on&&r.auto)h+=`<div class="acts view-only"><button data-skip="${id}">其實沒去</button></div>`;
  if(on&&now&&now.on&&!r.actual&&(st!==' past'||(pg&&pg.clock)))h+=`<div class="acts view-only"><button data-arrive="${id}">✓ 到了</button><button data-skip="${id}">略過</button></div>`;
@@ -442,6 +458,10 @@ function planAdd(id){
 }
 function scrollToCard(id){const c=document.querySelector(`.card[data-id="${id}"]`);if(c){c.scrollIntoView({block:'center',behavior:'smooth'});c.classList.add('flash');c.focus({preventScroll:true});setTimeout(()=>c.classList.remove('flash'),700)}}
 document.addEventListener('click',e=>{
+ const ph=e.target.closest('[data-ph]');if(ph){e.stopPropagation();lbShow(ph.dataset.ph)}
+},true);
+document.addEventListener('click',e=>{
+ const pa=e.target.closest('[data-phadd]');if(pa){phTarget=pa.dataset.phadd;$('phIn').value='';$('phIn').click();return}
  if(e.target.closest('#undoBtn')){if(toastAct)toastAct();$('toast').classList.remove('show');return}
  const go=e.target.closest('[data-go]');if(go){const id=go.dataset.go;if(!S.on[id]){MODE='edit';render();$('poolBox').open=true}scrollToCard(id);return}
  if(e.target.closest('#toMap')){window.scrollTo({top:0,behavior:'smooth'});return}
@@ -472,6 +492,7 @@ function addBack(id){const pa=planAdd(id);
  return true}
 document.addEventListener('change',e=>{
  const el=e.target;
+ if(el.id==='phIn'){if(phTarget&&el.files&&el.files.length)phAdd(phTarget,[...el.files]);return}
  if(el.id==='actStart'){if(okHM(el.value)){const m=toM(el.value);if(m!==S.dep)setDep(m,`實際出發改為 ${el.value}`)}else if(!el.value&&Number.isFinite(S.dep))setDep(null,'已清除實際出發');return}
  if(el.id==='start'){if(okHM(el.value)){S.start=el.value;save();clearTimeout(pendT);pendT=setTimeout(flush,1500)}return}
  if(el.dataset.a==='tog'){const id=el.closest('.card').dataset.id;
@@ -543,8 +564,9 @@ function drawMap(C){
  for(const g of groups){
   const one=g.ids.length===1,col=id=>P[id].type==='must'?must:opt;
   const html=one?`<span class="pin" style="background:${col(g.ids[0])}">${C.res[g.ids[0]].n}</span>`:`<span class="pin grp">${g.ids.map(id=>P[id].type==='must'?`<i class="m" style="background:${must}">${C.res[id].n}</i>`:`<b style="color:${opt}">${C.res[id].n}</b>`).join('<s>·</s>')}</span>`;
-  const txt=g.ids.map(id=>`${C.res[id].n}. ${nm(id)} ${toS(C.res[id].arr)}–${toS(C.res[id].dep)}`).join('<br>');
-  const m=L.marker([g.lat,g.lng],{title:txt.replace(/<br>/g,'；'),alt:g.ids.map(id=>C.res[id].n).join('、'),icon:L.divIcon({className:'',html,iconSize:null,iconAnchor:[15,15]})}).bindPopup(txt).addTo(layer);
+  const txt=g.ids.map(id=>`${C.res[id].n}. ${nm(id)} ${toS(C.res[id].arr)}–${toS(C.res[id].dep)}`).join('<br>'),phs=g.ids.flatMap(id=>PH[id]||[]);
+  const pop=txt+(phs.length?`<div class="pph">${phs.slice(0,12).map(x=>`<img src="${x.url}" data-ph="${x.id}" alt="照片">`).join('')}</div>`:''),ihtml=phs.length?html.replace(/<\/span>$/,`<i class="phc">📷</i></span>`):html;
+  const m=L.marker([g.lat,g.lng],{title:txt.replace(/<br>/g,'；'),alt:g.ids.map(id=>C.res[id].n).join('、'),icon:L.divIcon({className:'',html:ihtml,iconSize:null,iconAnchor:[15,15]})}).bindPopup(pop).addTo(layer);
   m.on('click',()=>scrollToCard(g.ids[0]));g.ids.forEach(id=>markers[id]=m);
  }
  L.marker([HOME.lat,HOME.lng],{title:'新竹縣政府（起訖）',alt:'家',zIndexOffset:1000,icon:L.divIcon({className:'',html:`<span class="pin" style="background:${ink}">家</span>`,iconSize:null,iconAnchor:[15,38]})}).bindPopup(`新竹縣政府｜出發 ${S.start}／回到 ${toS(C.end)}`).addTo(layer);
@@ -587,7 +609,53 @@ function initSortable(){
    lastId=ev.item.dataset.id;edit(`${short(lastId)} 移到第 ${ids.indexOf(lastId)+1} 站`,()=>{S.order=[...ids,...S.order.filter(id=>!S.on[id])]})}});
 }
 try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>render())}catch(e){}
+/* photos: kept in this browser's IndexedDB (thumbs + resized full images) */
+const PH={};let phDB=null,phTarget=null,lbId=null,lbUrl=null;
+const hhmm=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const idbReq=r=>new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const idbDone=tx=>new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error)});
+function phOpen(){return new Promise((res,rej)=>{if(!window.indexedDB)return rej(new Error('no idb'));const r=indexedDB.open('hc_photos',1);r.onupgradeneeded=()=>{r.result.createObjectStore('th',{keyPath:'id'});r.result.createObjectStore('full',{keyPath:'id'})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function phInit(){
+ try{phDB=await phOpen();const all=await idbReq(phDB.transaction('th').objectStore('th').getAll());
+  for(const x of all)if(Object.prototype.hasOwnProperty.call(P,x.stop))(PH[x.stop]=PH[x.stop]||[]).push({id:x.id,t:x.t,url:URL.createObjectURL(x.thumb)});
+  for(const k in PH)PH[k].sort((a,b)=>a.t-b.t);
+  if(all.length)render();
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+ }catch(e){phDB=null}
+}
+function loadImg(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{res(im);setTimeout(()=>URL.revokeObjectURL(u),1000)};im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('img'))};im.src=u})}
+function shrink(im,max,q){const k=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),w=Math.round(im.naturalWidth*k),h=Math.round(im.naturalHeight*k),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);return new Promise(r=>c.toBlob(r,'image/jpeg',q))}
+async function phAdd(stop,files){
+ if(!phDB){toast('這個瀏覽器無法保存照片（請勿用無痕模式）',null);return}
+ toast(`處理 ${files.length} 張照片中…`,null);let n=0,full=false;
+ for(const f of files){try{
+  const im=await loadImg(f),[big,th]=await Promise.all([shrink(im,1600,.82),shrink(im,240,.7)]);if(!big||!th)continue;
+  const id=Date.now().toString(36)+Math.random().toString(36).slice(2,7),t=Date.now();
+  const tx=phDB.transaction(['th','full'],'readwrite');tx.objectStore('th').put({id,stop,t,thumb:th});tx.objectStore('full').put({id,blob:big});await idbDone(tx);
+  (PH[stop]=PH[stop]||[]).push({id,t,url:URL.createObjectURL(th)});n++;
+ }catch(e){if(e&&e.name==='QuotaExceededError')full=true}}
+ render();
+ toast(n?`已加入 ${n} 張照片到「${short(stop)}」${n<files.length?`（${files.length-n} 張失敗）`:''}`:full?'手機儲存空間不足，照片沒有存到':'照片加入失敗',null);
+}
+async function lbShow(id){
+ const stop=Object.keys(PH).find(k=>PH[k].some(x=>x.id===id));if(!stop)return;const x=PH[stop].find(x=>x.id===id);
+ let url=x.url;try{const r=await idbReq(phDB.transaction('full').objectStore('full').get(id));if(r&&r.blob){url=URL.createObjectURL(r.blob);lbUrl=url}}catch(e){}
+ lbId=id;$('lbImg').src=url;$('lbImg').alt=short(stop)+' 照片';$('lbCap').textContent=`${short(stop)}・${hhmm(x.t)}`;
+ const a=$('lbDl');a.href=url;a.download=`${TRIP}_${short(stop)}_${hhmm(x.t).replace(':','')}.jpg`;
+ $('lb').classList.add('show');$('lbClose').focus();
+}
+function lbHide(){$('lb').classList.remove('show');$('lbImg').removeAttribute('src');if(lbUrl){URL.revokeObjectURL(lbUrl);lbUrl=null}lbId=null}
+async function phDel(id){
+ if(!confirm('刪除這張照片？（刪除後無法復原）'))return;
+ try{const tx=phDB.transaction(['th','full'],'readwrite');tx.objectStore('th').delete(id);tx.objectStore('full').delete(id);await idbDone(tx)}catch(e){toast('刪除失敗',null);return}
+ for(const k in PH){const i=PH[k].findIndex(x=>x.id===id);if(i>=0){URL.revokeObjectURL(PH[k][i].url);PH[k].splice(i,1)}}
+ lbHide();render();toast('已刪除照片',null);
+}
+$('lbClose').onclick=lbHide;$('lbDel').onclick=()=>{if(lbId)phDel(lbId)};
+$('lb').addEventListener('click',e=>{if(e.target.id==='lb')lbHide()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&lbId)lbHide()});
 render();
+phInit();
 if(nowInfo().on&&document.querySelector('.card.past'))setTimeout(()=>$('next').scrollIntoView({block:'start'}),300);
 
 </script>
