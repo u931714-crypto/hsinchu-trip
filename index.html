@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>11/21（六）新竹一日遊 v17</title>
+<title>11/21（六）新竹一日遊 v18</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" media="print" onload="this.media='all'">
 <style>
 :root{--bg:#f3eee4;--card:#fffdf8;--ink:#22201b;--sub:#5f5c54;--line:#e0d9c9;--must:#b8532e;--mustTxt:#a8462a;--mustbg:#f6e3d9;--opt:#4a6b55;--optTxt:#3f6049;--optbg:#e2ebe3;--acc:#2e4a6b;--warn:#a32d2d;--warnbg:#fbe9e9;--onc:#fff;--wait:#8a5a0b;--waitbg:#faeeda}
@@ -149,7 +149,7 @@ html{scroll-padding-bottom:76px;scroll-padding-top:60px}
 <div class="sum" id="sum" role="region" aria-label="行程摘要"></div><div class="sr" id="srlive" role="status" aria-live="polite"></div>
 <main>
 <div class="hdr">
-<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v17｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
+<div><h1>11/21（六）新竹一日遊</h1><div class="meta" id="meta">v18｜08:30 出發・阿胖外帶・清泉午餐後回家</div></div>
 <button id="mode" aria-pressed="false">✏️ 編輯</button>
 </div>
 
@@ -163,7 +163,7 @@ html{scroll-padding-bottom:76px;scroll-padding-top:60px}
 <label>出發 <input type="time" id="start" step="300"></label>
 <label>實際出發 <input type="time" id="actStart"></label>
 <button id="undoBar" disabled>↶ 復原</button><button id="clearAct">清除實到</button>
-<button id="copyPlan">📋 複製行程</button><button id="ghPlan">💾 存到 GitHub</button>
+<button id="copyPlan">📋 複製行程</button><button id="ghPlan">☁️ 存到 GitHub</button><button id="ghLoad">⬇️ 從 GitHub 載入</button><button id="ghKey">🔑 GitHub 金鑰</button>
 </div>
 
 <div class="leg">🏠 新竹縣政府 出發 <span id="st0"></span></div>
@@ -172,9 +172,9 @@ html{scroll-padding-bottom:76px;scroll-padding-top:60px}
 
 <details class="pool" id="poolBox"><summary id="poolSum">備選（今天不去）</summary><div class="note" style="margin:0 0 6px">按「＋ 加回行程」會自動插到最順的位置</div><div id="pool"></div></details>
 
-<div class="foot">
+<div class="foot"><div id="syncSt" role="status"></div>
 車程為估算（含停車約 10 分）；藍線為道路行車路線（需網路）；若路線服務暫時無法連線，會以虛線顯示站點連線示意。導航請按「導航」。清泉吊橋、三毛夢屋、將軍湯拆成獨立步行點，地圖位置以清泉吊橋附近示意；營業及開放狀態請以現場公告為準。阿胖、故居週一休；蕭如松週二休；三毛夢屋週三休。<br>
-v15｜08:30 出發；阿胖豆漿外帶（車上吃）；午餐在清泉；午餐後直接開車回縣政府（取消抱石與新竹站晚餐）。<br>編輯模式：拖曳 ≡ 或 ↑↓ 排序、±分鐘調停留、設「最早開始」會自動插入等待。改錯可按「↶ 復原」。「📋 複製行程」可貼給 Claude；「💾 存到 GitHub」會開 GitHub Issue 存檔。<span class="edit-only"> <button class="resetlink" id="reset">重置成預設行程</button></span>
+v15｜08:30 出發；阿胖豆漿外帶（車上吃）；午餐在清泉；午餐後直接開車回縣政府（取消抱石與新竹站晚餐）。<br>編輯模式：拖曳 ≡ 或 ↑↓ 排序、±分鐘調停留、設「最早開始」會自動插入等待。改錯可按「↶ 復原」。「📋 複製行程」可貼給 Claude；「☁️ 存到 GitHub」設定金鑰後會自動同步到 GitHub，換手機也能載入。<span class="edit-only"> <button class="resetlink" id="reset">重置成預設行程</button></span>
 </div>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="undoBtn">復原</button></div>
@@ -186,7 +186,7 @@ const I={
  car:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M3 16h18M7 19v-3M17 19v-3"/><circle cx="8" cy="13" r=".8"/><circle cx="16" cy="13" r=".8"/></svg>',
  walk:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2-6 3 3v3M12 15l-1-5 3-2 2 4 3 1M11 10l-3 2v3"/></svg>',
  map:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'};
-const TRIP='2026-11-21',TRIP_DOW=6,VER=17,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
+const TRIP='2026-11-21',TRIP_DOW=6,VER=18,KEY='hc_trip_v8'; // Keep legacy storage key to preserve existing user plans.
 const HOME={name:'新竹縣政府',q:'新竹縣政府 竹北市光明六路10號',lat:24.8269,lng:121.0129,addr:'竹北市光明六路10號'};
 const P={
  apang:{name:'阿胖豆漿',q:'阿胖豆漿 新竹縣竹東鎮東寧路三段56號',lat:24.7375,lng:121.0905,c:'Z',dur:10,type:'must',open:'05:30',close:'11:00',closed:[1],addr:'竹東鎮東寧路三段56號',note:'外帶：粄條韭菜蛋餅，車上吃；吃輕再上山'},
@@ -232,6 +232,7 @@ function sanitize(s){
  if(!okHM(s.start))s.start=DEF.start;
  if((s.v||0)<12){s.on.zhudong=0;s.on.rest=1;const ri=s.order.indexOf('rest');if(ri>=0)s.order.splice(ri,1);const ix=s.order.indexOf('lunch');if(ix>=0)s.order.splice(ix+1,0,'rest');}
  if((s.v||0)<13){s.start='08:30';s.on.rest=0;delete s.dur.apang}
+ if(!Number.isFinite(s.t))s.t=0;
  s.v=VER;delete s.mode;return s;
 }
 const toM=s=>{const[a,b]=s.split(':').map(Number);return a*60+b};
@@ -239,8 +240,9 @@ function toS(m){const d=Math.floor(m/1440),r=((m%1440)+1440)%1440;return String(
 const Q=new URLSearchParams(location.search);
 let S;try{S=sanitize(JSON.parse(localStorage.getItem(KEY)))}catch(e){S=clone(DEF)}
 let MODE=Q.get('edit')?'edit':'view';
-let storageWarned=false;
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){if(!storageWarned){storageWarned=true;setTimeout(()=>toast('瀏覽器無法保存行程變更；請確認儲存空間或隱私設定。',null),0)}}}
+let storageWarned=false,lastJ=null;
+const stKey=o=>{const c=Object.assign({},o);delete c.t;return JSON.stringify(c)};
+function save(){const j=stKey(S);if(lastJ!==null&&j!==lastJ){S.t=Date.now();if(ghTok()){setSync('☁️ 待同步…');clearTimeout(syncT);syncT=setTimeout(()=>pushRemote(false),3000)}}lastJ=j;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){if(!storageWarned){storageWarned=true;setTimeout(()=>toast('瀏覽器無法保存行程變更；請確認儲存空間或隱私設定。',null),0)}}}
 const cl=id=>id==='home'?'home':P[id].c;
 const short=id=>nm(id).replace(/（.*）/,'');
 function leg(a,b){
@@ -513,12 +515,53 @@ async function copyPlan(){
  let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();
  if(ok)done();else prompt('請手動複製以下內容：',t);
 }
+/* GitHub sync: state lives in issue #GH_ISSUE (read: public API; write: user's Issues-only token kept in this browser) */
+const GH_ISSUE=1,TK='hc_gh_token',GH_API=`https://api.github.com/repos/${REPO}/issues/${GH_ISSUE}`;
+const ghTok=()=>{try{return localStorage.getItem(TK)||''}catch(e){return ''}};
+const hhmm=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+let syncT=null,syncing=false;
+function setSync(t){const e=$('syncSt');if(e)e.textContent=t}
+function ghIssueBody(){return '這個 Issue 由行程網頁自動更新。請勿關閉或修改最後一行 HCSTATE。\n\n'+exportText()+'\nHCSTATE '+JSON.stringify(S)}
+async function pushRemote(manual){
+ const tk=ghTok();if(!tk){if(manual)ghSetup();return}
+ if(syncing){clearTimeout(syncT);syncT=setTimeout(()=>pushRemote(manual),1500);return}
+ syncing=true;setSync('☁️ 同步中…');
+ try{
+  const r=await fetch(GH_API,{method:'PATCH',headers:{'Authorization':'Bearer '+tk,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({body:ghIssueBody()})});
+  if(r.status===401||r.status===403||r.status===404){setSync('⚠ GitHub 金鑰無效或權限不足');if(manual)toast('GitHub 金鑰無效或權限不足',{label:'重設',fn:ghSetup});return}
+  if(!r.ok)throw new Error(r.status);
+  setSync('☁️ 已存到 GitHub '+hhmm(Date.now()));if(manual)toast('已存到 GitHub',null);
+ }catch(e){setSync('⚠ 尚未同步（網路問題），30 秒後重試');clearTimeout(syncT);syncT=setTimeout(()=>pushRemote(false),30000)}
+ finally{syncing=false}
+}
+async function pullRemote(manual){
+ try{
+  const tk=ghTok(),h={'Accept':'application/vnd.github+json'};if(tk)h.Authorization='Bearer '+tk;
+  const r=await fetch(GH_API,{cache:'no-store',headers:h});if(!r.ok)throw new Error(r.status);
+  const d=await r.json(),m=/^HCSTATE (.+)$/m.exec(d.body||'');
+  if(!m){if(manual)toast('GitHub 上還沒有存檔',null);else if(tk&&S.t)pushRemote(false);return}
+  const R=sanitize(JSON.parse(m[1]));
+  if(stKey(R)===stKey(S)){S.t=Math.max(S.t||0,R.t||0);setSync('☁️ 與 GitHub 一致');if(manual)toast('已經是最新的',null);return}
+  if(manual||(R.t||0)>(S.t||0)){snap();S=R;lastJ=stKey(S);render();setSync('☁️ 已載入 GitHub 存檔（'+(R.t?hhmm(R.t):'?')+'）');toast('已載入 GitHub 上的存檔');return}
+  if(tk)pushRemote(false);else setSync('手機上的版本比 GitHub 新（設定金鑰後會自動同步）');
+ }catch(e){if(manual)toast('無法連到 GitHub，請稍後再試',null)}
+}
+function ghSetup(){
+ const v=prompt('貼上 GitHub 金鑰（fine-grained token，只給 hsinchu-trip 的 Issues 讀寫權限）。\n金鑰只存在這支手機的瀏覽器。\n留空並按確定＝移除金鑰。'+(ghTok()?'\n（目前已設定）':''),'');
+ if(v===null)return;
+ try{if(v.trim())localStorage.setItem(TK,v.trim());else localStorage.removeItem(TK)}catch(e){toast('瀏覽器無法保存金鑰',null);return}
+ if(v.trim())pushRemote(true);else{setSync('');toast('已移除 GitHub 金鑰',null)}
+}
 function ghPlan(){
- const d=new Date(),p=n=>String(n).padStart(2,'0'),ts=`${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`;
- const url=`https://github.com/${REPO}/issues/new?title=${encodeURIComponent('行程存檔 '+ts)}&body=${encodeURIComponent(exportText())}`;
- window.open(url,'_blank','noopener');
+ if(ghTok()){pushRemote(true);return}
+ if(confirm('還沒設定 GitHub 金鑰。\n按「確定」設定金鑰（之後會自動同步）；\n按「取消」改開 GitHub Issue 頁面手動存。')){ghSetup();return}
+ const d=new Date(),ts=`${d.getMonth()+1}/${d.getDate()} ${hhmm(d)}`;
+ window.open(`https://github.com/${REPO}/issues/new?title=${encodeURIComponent('行程存檔 '+ts)}&body=${encodeURIComponent(exportText())}`,'_blank','noopener');
  toast('在 GitHub 頁面按「Create」就存好了',null);
 }
+$('ghLoad').onclick=()=>{if(confirm('用 GitHub 上的存檔取代這支手機上的行程？（之後可按「復原」）'))pullRemote(true)};
+$('ghKey').onclick=ghSetup;
+window.addEventListener('online',()=>{if(ghTok()&&syncT){clearTimeout(syncT);pushRemote(false)}});
 $('copyPlan').onclick=copyPlan;
 $('ghPlan').onclick=ghPlan;
 $('mode').onclick=()=>{MODE=MODE==='edit'?'view':'edit';render()};
@@ -595,6 +638,7 @@ function initSortable(){
 }
 try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>render())}catch(e){}
 render();
+pullRemote(false);
 if(nowInfo().on&&document.querySelector('.card.past'))setTimeout(()=>$('next').scrollIntoView({block:'start'}),300);
 
 </script>
